@@ -8,8 +8,8 @@
 #define COMPUTERMOVE 'O'
 #define HUMANMOVE 'X'
 
-// ---------------- Intelligent Moves start (moved to minimax_core.c)
-#include "minimax_core.h"
+// ---------------- Intelligent Moves start (Team_B minimax implementation)
+#include "Team_B/minimax_core.h"
 
 // -----------------------------------Intelligent Moves end
 
@@ -166,6 +166,9 @@ void playTicTacToe(int whoseTurn)
                     }
                 }
             }
+            // Ensure minimax globals reflect that the AI is playing 'o' and human is 'x'
+            player = 'o';
+            opponent = 'x';
             struct Move thisMove = findBestMoveWithDifficulty(tempBoard, difficulty);
             x = thisMove.row;
             y = thisMove.col;
