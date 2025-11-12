@@ -12,6 +12,7 @@
                 "${fileDirname}\\Team_B\\2_player.c",
                 "${fileDirname}\\Team_B\\gameboard.c",
                 "${fileDirname}\\Team_B\\PERFECT_minimax.c",
+                "${fileDirname}\\Team_B\\IMPERFECT_minimax.c",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
