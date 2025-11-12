@@ -13,11 +13,11 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include "PERFECT_minimax.h"
+#include "minimax.h"
 
 /* External globals (preserved for your project) */
-char player = 'X';
-char opponent = 'O';
+static char player = 'X';
+static char opponent = 'O';
 
 /* Precomputed winning bit masks */
 static const int WIN_MASKS[8] = {
@@ -53,15 +53,6 @@ static inline bool isWinnerMask(int mask) {
         if ((mask & WIN_MASKS[i]) == WIN_MASKS[i])
             return true;
     return false;
-}
-
-/* Evaluate board: +10 for player win, −10 for opponent win, 0 otherwise */
-int evaluate(char b[3][3]) {
-    int maskX, maskO;
-    boardToMasks(b, &maskX, &maskO);
-    if (isWinnerMask(maskX)) return +10;
-    if (isWinnerMask(maskO)) return -10;
-    return 0;
 }
 
 /*
@@ -103,20 +94,10 @@ static int minimax_masks(int playerMask, int oppMask, int depth,
 }
 
 /*
- * Public wrapper: same signature as your original minimax().
- * Converts char board to bit masks and runs the mask-based search.
- */
-int minimax(char board[3][3], int depth, int isMax) {
-    int maskP = 0, maskO = 0;
-    boardToMasks(board, &maskP, &maskO);
-    return minimax_masks(maskP, maskO, depth, -1000, 1000, isMax != 0);
-}
-
-/*
  * findBestMove: returns the best move for 'player'
  * using alpha-beta-optimized mask minimax.
  */
-struct Move findBestMove(char board[3][3]) {
+struct Move findBestMovePerfect(char board[3][3]) {
     int maskP = 0, maskO = 0;
     boardToMasks(board, &maskP, &maskO);
     int occupied = maskP | maskO;
