@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gameboard.h"
-#include "minimax.h"
+#include "PERFECT_minimax.h"
 
 // Function to display the game board
 void showBoard(char board[][SIDE])

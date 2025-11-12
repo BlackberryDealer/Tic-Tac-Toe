@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include "1_player.h"
 #include "gameboard.h"
-#include "minimax.h"
+#include "PERFECT_minimax.h"
 
 // One-player specific winner declaration (COMPUTER vs HUMAN)
 void declareWinner(int whoseTurn)
@@ -34,8 +34,8 @@ void playOnePlayer()
             char tempBoard[3][3];
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    if (board[i][j] == 'X') tempBoard[i][j] = 'x';
-                    else if (board[i][j] == 'O') tempBoard[i][j] = 'o';
+                    if (board[i][j] == 'X') tempBoard[i][j] = 'X';
+                    else if (board[i][j] == 'O') tempBoard[i][j] = 'O';
                     else tempBoard[i][j] = '_';
                 }
             }
