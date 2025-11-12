@@ -2,7 +2,6 @@
  * minimax.c
  * Ultra-efficient, perfect Tic-Tac-Toe minimax using bitboards + alpha-beta pruning
  *
- * Public API unchanged: evaluate(), minimax(), and findBestMove() operate on char[3][3].
  * Internally uses two 9-bit masks: bits 0..8 correspond to cells:
  *  0 1 2
  *  3 4 5
