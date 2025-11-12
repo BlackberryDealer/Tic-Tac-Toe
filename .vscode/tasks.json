@@ -3,12 +3,15 @@
         {
             "type": "shell",
             "label": "C/C++: gcc.exe build active file",
-            "command": "C:/MinGW/bin/gcc.exe",
+            "command": "C:\\msys64\\ucrt64\\bin\\gcc.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${fileDirname}\\*.c",
-                "${fileDirname}\\Team_B\\*.c",
+                "${fileDirname}\\main.c",
+                "${fileDirname}\\Team_B\\1_player.c",
+                "${fileDirname}\\Team_B\\2_player.c",
+                "${fileDirname}\\Team_B\\gameboard.c",
+                "${fileDirname}\\Team_B\\PERFECT_minimax.c",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
