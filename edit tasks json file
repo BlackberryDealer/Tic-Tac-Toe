@@ -1,0 +1,12 @@
+replace your args:[] key in tasks.json file with:
+"args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "${fileDirname}\\main.c",
+                "${fileDirname}\\Team_B\\1_player.c",
+                "${fileDirname}\\Team_B\\2_player.c",
+                "${fileDirname}\\Team_B\\gameboard.c",
+                "${fileDirname}\\Team_B\\PERFECT_minimax.c",
+                "-o",
+                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+            ]
