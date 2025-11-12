@@ -30,7 +30,7 @@ void playTwoPlayer()
 
     showInstructions();
 
-    while (!gameOver(board)) {
+    while (1) {
         printf("Player %d, enter your move (1-9): ", (turn % 2) + 1);
         if (scanf("%d", &move) != 1) {
             int c; while ((c = getchar()) != '\n' && c != EOF) {}
@@ -55,11 +55,18 @@ void playTwoPlayer()
         turn++;
 
         showBoard(board);
-        if (gameOver(board)) {
-            int last = (turn - 1) % 2; // 0 -> player1, 1 -> player2
-            // last == 0 means Player 1 just played
+
+        GameStatus status = gameStatus(board);
+        if (status == GAME_WIN) {
+            int last = (turn - 1) % 2; /* 0 -> player1 (X), 1 -> player2 (O) */
             declareWinnerTwoPlayer(last == 0 ? 1 : 2);
             return;
         }
+        if (status == GAME_DRAW) {
+            printf("The game is a draw\n");
+            return;
+        }
+
+        /* otherwise continue to next player's turn */
     }
 }

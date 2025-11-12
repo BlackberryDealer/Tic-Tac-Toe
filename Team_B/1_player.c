@@ -29,7 +29,7 @@ void playOnePlayer()
     int moveIndex = 0, x, y;
     int whoseTurn = COMPUTER;
 
-    while (!gameOver(board) && moveIndex != SIDE * SIDE) {
+    while (1) {
         if (whoseTurn == COMPUTER) {
             char tempBoard[3][3];
             for (int i = 0; i < 3; i++) {
@@ -47,6 +47,17 @@ void playOnePlayer()
             printf("COMPUTER has put a %c in cell %d %d\n", COMPUTERMOVE, x, y);
             showBoard(board);
             moveIndex++;
+
+            // check status after computer move
+            GameStatus status = gameStatus(board);
+            if (status == GAME_WIN) {
+                declareWinner(COMPUTER);
+                return;
+            } else if (status == GAME_DRAW) {
+                printf("It's a draw\n");
+                return;
+            }
+
             whoseTurn = HUMAN;
         } else { // HUMAN
             int move;
@@ -66,21 +77,27 @@ void playOnePlayer()
                 board[x][y] = HUMANMOVE;
                 showBoard(board);
                 moveIndex++;
-                if (gameOver(board)) {
+
+                // check status after human move
+                GameStatus status = gameStatus(board);
+                if (status == GAME_WIN) {
                     declareWinner(HUMAN);
                     return;
+                } else if (status == GAME_DRAW) {
+                    printf("It's a draw\n");
+                    return;
                 }
+
                 whoseTurn = COMPUTER;
             } else {
                 printf("Cell %d is already occupied. Try again.\n", move);
             }
         }
-    }
 
-    if (!gameOver(board) && moveIndex == SIDE * SIDE)
-        printf("It's a draw\n");
-    else {
-        if (whoseTurn == COMPUTER) whoseTurn = HUMAN; else whoseTurn = COMPUTER;
-        declareWinner(whoseTurn);
+        // safety: in case gameStatus wasn't reached for some reason
+        if (moveIndex >= SIDE * SIDE) {
+            printf("It's a draw\n");
+            return;
+        }
     }
 }

@@ -9,6 +9,13 @@
 #define COMPUTERMOVE 'O'
 #define HUMANMOVE 'X'
 
+/* game status values */
+typedef enum {
+    GAME_ONGOING = 0,
+    GAME_WIN = 1,
+    GAME_DRAW = 2
+} GameStatus;
+
 // display / helper functions
 void showBoard(char board[][SIDE]);
 void showInstructions(void);
@@ -17,5 +24,8 @@ int rowCrossed(char board[][SIDE]);
 int columnCrossed(char board[][SIDE]);
 int diagonalCrossed(char board[][SIDE]);
 int gameOver(char board[][SIDE]);
+
+/* precise status function */
+GameStatus gameStatus(char board[][SIDE]);
 
 #endif

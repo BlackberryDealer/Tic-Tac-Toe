@@ -96,9 +96,29 @@ int diagonalCrossed(char board[][SIDE])
     return 0;
 }
 
-// Function to check if the game is over
-int gameOver(char board[][SIDE])
+/* helper: check if board is full (no spaces) */
+static bool isBoardFull(char board[][SIDE])
 {
-    return (rowCrossed(board) || columnCrossed(board)
-            || diagonalCrossed(board));
+    for (int r = 0; r < SIDE; r++) {
+        for (int c = 0; c < SIDE; c++) {
+            if (board[r][c] == ' ')
+                return false;
+        }
+    }
+    return true;
 }
+
+/* return GAME_WIN if any win-line exists,
+   GAME_DRAW if board full with no winner,
+   GAME_ONGOING otherwise */
+GameStatus gameStatus(char board[][SIDE])
+{
+    if (rowCrossed(board) || columnCrossed(board) || diagonalCrossed(board))
+        return GAME_WIN;
+
+    if (isBoardFull(board))
+        return GAME_DRAW;
+
+    return GAME_ONGOING;
+}
+
