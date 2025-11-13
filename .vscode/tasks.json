@@ -1,13 +1,18 @@
 {
     "tasks": [
         {
-            "type": "cppbuild",
+            "type": "shell",
             "label": "C/C++: gcc.exe build active file",
             "command": "C:\\msys64\\ucrt64\\bin\\gcc.exe",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "${fileDirname}\\main.c",
+                "${fileDirname}\\Team_B\\1_player.c",
+                "${fileDirname}\\Team_B\\2_player.c",
+                "${fileDirname}\\Team_B\\gameboard.c",
+                "${fileDirname}\\Team_B\\PERFECT_minimax.c",
+                "${fileDirname}\\Team_B\\IMPERFECT_minimax.c",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
