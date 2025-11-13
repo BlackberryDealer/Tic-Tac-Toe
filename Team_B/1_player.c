@@ -4,9 +4,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "1_player.h"
 #include "gameboard.h"
 #include "minimax.h"
+
+#define EMPTY ' '   // single definition for an empty board cell
 
 // Declare winner depending on whoseTurn (COMPUTER or HUMAN)
 void declareWinner(int whoseTurn)
@@ -29,11 +32,20 @@ void playOnePlayer()
 
     // Ask user to choose AI difficulty
     int difficulty;
-    printf("Choose AI difficulty:\n");
-    printf("1. Perfect (always optimal)\n");
-    printf("2. Imperfect (can make mistakes)\n");
-    printf("\nEnter choice: ");
-    scanf("%d", &difficulty);
+    while (1) {
+        printf("Choose AI difficulty:\n");
+        printf("1. Perfect (always optimal)\n");
+        printf("2. Imperfect (can make mistakes)\n");
+        printf("\nEnter choice: ");
+        if (scanf("%d", &difficulty) != 1) {
+            // Clear invalid input buffer
+            int c; while ((c = getchar()) != '\n' && c != EOF) {}
+            printf("Invalid input. Please enter 1 or 2.\n");
+            continue;
+        }
+        if (difficulty == 1 || difficulty == 2) break;
+        printf("Invalid choice. Please enter 1 or 2.\n");
+    }
 
     // Track move index and whose turn it is
     int moveIndex = 0, x, y;
@@ -43,12 +55,13 @@ void playOnePlayer()
     while (1) {
         if (whoseTurn == COMPUTER) {
             // Convert board to tempBoard for minimax functions
-            char tempBoard[3][3];
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+            // Use SIDE so this code remains consistent if board size changes
+            char tempBoard[SIDE][SIDE];
+            for (int i = 0; i < SIDE; i++) {
+                for (int j = 0; j < SIDE; j++) {
                     if (board[i][j] == 'X') tempBoard[i][j] = 'X';
                     else if (board[i][j] == 'O') tempBoard[i][j] = 'O';
-                    else tempBoard[i][j] = '_'; // empty cell
+                    else tempBoard[i][j] = EMPTY; // empty cell
                 }
             }
 
@@ -62,6 +75,23 @@ void playOnePlayer()
             // Apply computer move to board
             x = thisMove.row;
             y = thisMove.col;
+
+            // Defensive check: if minimax returned invalid move, pick first empty cell
+            if (x < 0 || x >= SIDE || y < 0 || y >= SIDE || board[x][y] != EMPTY) {
+                int found = 0;
+                for (int i = 0; i < SIDE && !found; i++) {
+                    for (int j = 0; j < SIDE; j++) {
+                        if (board[i][j] == EMPTY) {
+                            x = i; y = j; found = 1; break;
+                        }
+                    }
+                }
+                if (!found) { // no empty cell, declare draw and return
+                    printf("It's a DRAW\n");
+                    return;
+                }
+            }
+
             board[x][y] = COMPUTERMOVE;
             printf("COMPUTER has put a %c in cell %d %d\n", COMPUTERMOVE, x, y);
             showBoard(board);
@@ -88,8 +118,8 @@ void playOnePlayer()
                 printf("Invalid input!\n");
                 continue;
             }
-            if (move < 1 || move > 9) {
-                printf("Invalid input! Please enter a number between 1 and 9.\n");
+            if (move < 1 || move > SIDE * SIDE) {
+                printf("Invalid input! Please enter a number between 1 and %d.\n", SIDE * SIDE);
                 continue;
             }
 
@@ -98,7 +128,7 @@ void playOnePlayer()
             y = (move - 1) % SIDE;
 
             // Place human move if cell is empty
-            if (board[x][y] == ' ') {
+            if (board[x][y] == EMPTY) {
                 board[x][y] = HUMANMOVE;
                 showBoard(board);
                 moveIndex++;
