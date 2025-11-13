@@ -44,8 +44,8 @@ void playOnePlayer()
             printf("Invalid input. Please enter 1 or 2.\n");
             continue;
         }
-        if (difficulty == 1 || difficulty == 2) break;
-        printf("Invalid choice. Please enter 1 or 2.\n");
+        if (difficulty == 1 || difficulty == 2 || difficulty == 3) break;
+        printf("Invalid choice. Please enter 1,  2 or 3.\n");
     }
 
     // Track move index and whose turn it is
