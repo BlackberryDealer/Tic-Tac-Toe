@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "minimax.h"
+#include "model_minimax.h" 
 
 // Local (file-only) globals for player symbols
 // These are marked static so they don't clash with other files
@@ -120,3 +121,24 @@ struct Move findBestMoveImperfect(char board[3][3]) {
 
     return bestMove;
 }
+
+struct Move findBestMoveModel(char board[3][3]) {
+    int bestRow = -1, bestCol = -1;
+    double bestScore = -1e9;
+    for (int i=0; i<3; ++i) {
+        for (int j=0; j<3; ++j) {
+            if (board[i][j] == '_') {
+                board[i][j] = 'X'; // Simulate AI move
+                double score = evaluateBoardLogistic(board);
+                board[i][j] = '_'; // Undo move
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestRow = i; bestCol = j;
+                }
+            }
+        }
+    }
+    struct Move mv = {bestRow, bestCol};
+    return mv;
+}
+

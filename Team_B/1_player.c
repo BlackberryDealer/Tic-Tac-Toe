@@ -32,6 +32,7 @@ void playOnePlayer()
     printf("Choose AI difficulty:\n");
     printf("1. Perfect (always optimal)\n");
     printf("2. Imperfect (can make mistakes)\n");
+    printf("3. Model (trained ML, can make different mistakes)\n"); 
     printf("Enter choice: ");
     scanf("%d", &difficulty);
 
@@ -56,9 +57,10 @@ void playOnePlayer()
             struct Move thisMove;
             if (difficulty == 1)
                 thisMove = findBestMovePerfect(tempBoard);   // Perfect AI
-            else
+            else if (difficulty == 2)
                 thisMove = findBestMoveImperfect(tempBoard); // Imperfect AI
-
+            else if (difficulty == 3)
+                thisMove = findBestMoveModel(tempBoard);
             // Apply computer move to board
             x = thisMove.row;
             y = thisMove.col;
