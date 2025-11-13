@@ -12,9 +12,9 @@
 void declareWinner(int whoseTurn)
 {
     if (whoseTurn == COMPUTER)
-        printf("COMPUTER has won\n");
+        printf("COMPUTER has won!!!\n");
     else
-        printf("HUMAN has won\n");
+        printf("HUMAN has won!!!\n");
 }
 
 void playOnePlayer()
@@ -32,7 +32,7 @@ void playOnePlayer()
     printf("Choose AI difficulty:\n");
     printf("1. Perfect (always optimal)\n");
     printf("2. Imperfect (can make mistakes)\n");
-    printf("Enter choice: ");
+    printf("\nEnter choice: ");
     scanf("%d", &difficulty);
 
     // Track move index and whose turn it is
@@ -73,7 +73,7 @@ void playOnePlayer()
                 declareWinner(COMPUTER);
                 return;
             } else if (status == GAME_DRAW) {
-                printf("It's a draw\n");
+                printf("It's a DRAW\n");
                 return;
             }
 
@@ -109,7 +109,7 @@ void playOnePlayer()
                     declareWinner(HUMAN);
                     return;
                 } else if (status == GAME_DRAW) {
-                    printf("It's a draw\n");
+                    printf("It's a DRAW\n");
                     return;
                 }
 
@@ -122,7 +122,7 @@ void playOnePlayer()
 
         // Safety check: if all cells filled but no winner, declare draw
         if (moveIndex >= SIDE * SIDE) {
-            printf("It's a draw\n");
+            printf("It's a DRAW\n");
             return;
         }
     }

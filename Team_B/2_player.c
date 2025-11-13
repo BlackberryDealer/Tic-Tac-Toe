@@ -11,11 +11,11 @@
 void declareWinnerTwoPlayer(int playerNumber)
 {
     if (playerNumber == 1)
-        printf("Player 1 has won\n");
+        printf("Player 1 has won!!!\n");
     else if (playerNumber == 2)
-        printf("Player 2 has won\n");
+        printf("Player 2 has won!!!\n");
     else
-        printf("Player %d has won\n", playerNumber);
+        printf("Player %d has won!!!\n", playerNumber);
 }
 
 void playTwoPlayer()
@@ -63,7 +63,7 @@ void playTwoPlayer()
             return;
         }
         if (status == GAME_DRAW) {
-            printf("The game is a draw\n");
+            printf("The game is a DRAW\n");
             return;
         }
 
