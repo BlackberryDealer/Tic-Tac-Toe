@@ -1,1 +1,39 @@
-.vscode/tasks.json
+# Ignore custom project files
+task.json
+
+# Ignore C build artefacts
+*.exe
+*.o
+*.ko
+*.obj
+*.elf
+*.out
+*.app
+
+# Ignore Code::Blocks build folders
+/bin/
+/obj/
+
+# Ignore Visual Studio Code settings (optional)
+.vscode/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore editor swap/temp files
+*~
+*.swp
+*.tmp
+*.log
+
+# Ignore precompiled headers and libraries
+*.gch
+*.pch
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+*.la
+*.lo
