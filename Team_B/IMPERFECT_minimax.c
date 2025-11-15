@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include "minimax.h"
-#include "model_minimax.h" 
+#include "model_minimax.h"
 
 // Local (file-only) globals for player symbols
 // These are marked static so they don't clash with other files
@@ -31,7 +31,7 @@ static inline void boardToMasks(const char board[3][3], int *maskX, int *maskO) 
     *maskO = 0;
     for (int r = 0; r < 3; ++r)
         for (int c = 0; c < 3; ++c) {
-            int idx = r * 3 + c;   // cell index
+            int idx = r * 3 + c; // cell index
             char ch = board[r][c];
             if (ch == 'X') *maskX |= (1 << idx); // set bit for X
             else if (ch == 'O') *maskO |= (1 << idx); // set bit for O
@@ -53,7 +53,7 @@ static inline bool isWinnerMask(int mask) {
 static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
     // Terminal checks: win/loss/draw
     if (isWinnerMask(playerMask)) return 10 - depth;
-    if (isWinnerMask(oppMask))    return -10 + depth;
+    if (isWinnerMask(oppMask)) return -10 + depth;
     if ((playerMask | oppMask) == 0x1FF || depth >= 2) return 0; // full board or cutoff
 
     // Initialize best score depending on role
@@ -75,7 +75,6 @@ static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
     for (int i = 0; i < count; ++i) {
         int pos = moves[i];
         int bit = (1 << pos);
-
         if (isMax) {
             // Maximizer (AI's turn)
             int val = minimax_masks(playerMask | bit, oppMask, depth + 1, false);
@@ -86,7 +85,6 @@ static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
             if (val < best) best = val;
         }
     }
-
     return best;
 }
 
@@ -97,7 +95,6 @@ struct Move findBestMoveImperfect(char board[3][3]) {
     int maskP = 0, maskO = 0;
     boardToMasks(board, &maskP, &maskO);
     int occupied = maskP | maskO;
-
     int bestVal = -1000;
     struct Move bestMove = { -1, -1 };
 
@@ -106,7 +103,7 @@ struct Move findBestMoveImperfect(char board[3][3]) {
 
     // Try random positions until a good move is found
     for (int i = 0; i < 9; ++i) {
-        int pos = rand() % 9;   // pick random cell
+        int pos = rand() % 9; // pick random cell
         int bit = (1 << pos);
         if (occupied & bit) continue; // skip if already taken
 
@@ -118,27 +115,8 @@ struct Move findBestMoveImperfect(char board[3][3]) {
             bestMove.col = pos % 3;
         }
     }
-
     return bestMove;
 }
 
-struct Move findBestMoveModel(char board[3][3]) {
-    int bestRow = -1, bestCol = -1;
-    double bestScore = -1e9;
-    for (int i=0; i<3; ++i) {
-        for (int j=0; j<3; ++j) {
-            if (board[i][j] == '_') {
-                board[i][j] = 'X'; // Simulate AI move
-                double score = evaluateBoardLogistic(board);
-                board[i][j] = '_'; // Undo move
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestRow = i; bestCol = j;
-                }
-            }
-        }
-    }
-    struct Move mv = {bestRow, bestCol};
-    return mv;
-}
-
+// REMOVE THE findBestMoveModel() FUNCTION FROM HERE!
+// It belongs only in model_minimax.c

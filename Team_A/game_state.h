@@ -26,6 +26,11 @@ typedef enum {
     MODE_TWO_PLAYER
 } GameMode;
 
+// Difficulty levels (mapped to Team B's AI)
+#define DIFF_EASY 3      // Model-based (makes mistakes)
+#define DIFF_MEDIUM 2    // Imperfect
+#define DIFF_HARD 1      // Perfect
+
 // Global game state
 typedef struct {
     GameScreen screen;
@@ -54,10 +59,10 @@ extern Color colorBackground;
 extern Color colorDark;
 extern Color colorLight;
 
-// Global game state (extern declaration)
+// Global game state instance
 extern GameState game;
 
-// Function declarations
+// Game state functions
 void InitGame(void);
 void ResetBoard(void);
 bool CheckWinner(void);

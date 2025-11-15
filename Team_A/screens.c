@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "game_state.h"
 #include "ui.h"
-#include "../Team_B/minimax_core.h"
+#include "../Team_B/minimax.h"
 
 void DrawStartScreen(void)
 {
@@ -178,8 +178,7 @@ void HandleSymbolSelectScreen(bool isPlayer1)
             {
                 game.humanSymbol = 'x';
                 game.aiSymbol = 'o';
-                player = 'x';
-                opponent = 'o';
+                // Removed: player = 'x'; opponent = 'o';
             }
             else
             {
@@ -194,8 +193,7 @@ void HandleSymbolSelectScreen(bool isPlayer1)
             {
                 game.humanSymbol = 'o';
                 game.aiSymbol = 'x';
-                player = 'x';
-                opponent = 'o';
+                // Removed: player = 'x'; opponent = 'o';
             }
             else
             {
@@ -213,6 +211,7 @@ void HandleSymbolSelectScreen(bool isPlayer1)
         }
     }
 }
+
 
 void DrawInstructionsScreen(void)
 {

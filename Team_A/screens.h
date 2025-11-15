@@ -1,6 +1,8 @@
 #ifndef SCREENS_H
 #define SCREENS_H
 
+#include <stdbool.h>
+
 // Screen drawing functions
 void DrawStartScreen(void);
 void DrawModeSelectScreen(void);
