@@ -1,29 +1,91 @@
+#include "raylib.h"
+#include "Team_A/game_state.h"
+#include "Team_A/screens.h"
 #include <stdio.h>
-#include "Team_B/1_player.h"
-#include "Team_B/2_player.h"
+#include <stdlib.h>
+#include <time.h>
 
-int main() {
-    int choice;
+void UpdateGame(void);
 
-    while (1) {
-        printf("\nTic Tac Toe Game\n");
-        printf("1. One Player (vs AI)\n");
-        printf("2. Two Player\n");
-        printf("3. Exit the game\n");
-        printf("\nEnter choice: ");
-        scanf("%d", &choice);
-
-        if (choice == 1)
-            playOnePlayer();
-        else if (choice == 2)
-            playTwoPlayer();
-        else if (choice == 3) {
-            printf("\nExiting the game.... Goodbye!\n\n");
-            break;
-        } else {
-            printf("Invalid choice.\n");
+int main(void)
+{
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    InitWindow(800, 600, "Tic-Tac-Toe");
+    SetTargetFPS(60);
+    SetWindowMinSize(600, 450);
+    
+    srand(time(NULL));
+    InitGame();
+    
+    while (!WindowShouldClose())
+    {
+        UpdateGame();
+        
+        BeginDrawing();
+        ClearBackground(colorBackground);
+        
+        switch (game.screen)
+        {
+            case SCREEN_START:
+                DrawStartScreen();
+                break;
+            case SCREEN_MODE_SELECT:
+                DrawModeSelectScreen();
+                break;
+            case SCREEN_DIFFICULTY_SELECT:
+                DrawDifficultySelectScreen();
+                break;
+            case SCREEN_SYMBOL_SELECT_1P:
+                DrawSymbolSelectScreen(false);
+                break;
+            case SCREEN_SYMBOL_SELECT_2P:
+                DrawSymbolSelectScreen(true);
+                break;
+            case SCREEN_INSTRUCTIONS:
+                DrawInstructionsScreen();
+                break;
+            case SCREEN_GAME:
+                DrawGameScreen();
+                break;
+            case SCREEN_GAME_OVER:
+                DrawGameOverScreen();
+                break;
         }
+        
+        EndDrawing();
     }
-
+    
+    CloseWindow();
     return 0;
+}
+
+void UpdateGame(void)
+{
+    switch (game.screen)
+    {
+        case SCREEN_START:
+            HandleStartScreen();
+            break;
+        case SCREEN_MODE_SELECT:
+            HandleModeSelectScreen();
+            break;
+        case SCREEN_DIFFICULTY_SELECT:
+            HandleDifficultySelectScreen();
+            break;
+        case SCREEN_SYMBOL_SELECT_1P:
+            HandleSymbolSelectScreen(false);
+            break;
+        case SCREEN_SYMBOL_SELECT_2P:
+            HandleSymbolSelectScreen(true);
+            break;
+        case SCREEN_INSTRUCTIONS:
+            HandleInstructionsScreen();
+            break;
+        case SCREEN_GAME:
+            HandleGameScreen();
+            break;
+        case SCREEN_GAME_OVER:
+            HandleGameOverScreen();
+            break;
+    }
 }
