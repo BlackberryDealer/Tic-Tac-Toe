@@ -7,7 +7,7 @@
  *  3 4 5
  *  6 7 8
  *
- * EMPTY char is '_' as before.
+ * EMPTY char is ' ' (space).
  */
 
 #include <stdio.h>

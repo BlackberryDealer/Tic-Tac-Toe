@@ -176,13 +176,12 @@ void HandleSymbolSelectScreen(bool isPlayer1)
         {
             if (game.mode == MODE_ONE_PLAYER)
             {
-                game.humanSymbol = 'x';
-                game.aiSymbol = 'o';
-                // Removed: player = 'x'; opponent = 'o';
+                game.humanSymbol = 'X';
+                game.aiSymbol = 'O';
             }
             else
             {
-                game.humanSymbol = 'x';
+                game.humanSymbol = 'X';
             }
             ResetBoard();
             game.screen = SCREEN_GAME;
@@ -191,13 +190,12 @@ void HandleSymbolSelectScreen(bool isPlayer1)
         {
             if (game.mode == MODE_ONE_PLAYER)
             {
-                game.humanSymbol = 'o';
-                game.aiSymbol = 'x';
-                // Removed: player = 'x'; opponent = 'o';
+                game.humanSymbol = 'O';
+                game.aiSymbol = 'X';
             }
             else
             {
-                game.humanSymbol = 'o';
+                game.humanSymbol = 'O';
             }
             ResetBoard();
             game.screen = SCREEN_GAME;
@@ -321,7 +319,7 @@ void DrawGameScreen(void)
             float x = boardX + j * cellSize + cellSize/2;
             float y = boardY + i * cellSize + cellSize/2;
             
-            if (game.board[i][j] == 'x')
+            if (game.board[i][j] == 'X')
             {
                 float offset = cellSize * 0.25f;
                 DrawLineEx((Vector2){x - offset, y - offset},
@@ -329,12 +327,12 @@ void DrawGameScreen(void)
                 DrawLineEx((Vector2){x + offset, y - offset},
                           (Vector2){x - offset, y + offset}, 8, colorPrimary);
             }
-            else if (game.board[i][j] == 'o')
+            else if (game.board[i][j] == 'O')
             {
                 DrawRing((Vector2){x, y}, cellSize * 0.25f, cellSize * 0.3f, 0, 360, 32, colorAccent);
             }
             
-            if (!game.gameOver && !game.aiTurn && game.board[i][j] == '_')
+            if (!game.gameOver && !game.aiTurn && game.board[i][j] == ' ')
             {
                 Rectangle cell = {boardX + j * cellSize, boardY + i * cellSize, 
                                  cellSize, cellSize};
@@ -397,7 +395,7 @@ void HandleGameScreen(void)
                 Rectangle cell = {boardX + j * cellSize, boardY + i * cellSize,
                                  cellSize, cellSize};
                 
-                if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == '_')
+                if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
                 {
                     game.board[i][j] = game.currentPlayer;
                     
@@ -415,7 +413,7 @@ void HandleGameScreen(void)
                     }
                     else
                     {
-                        game.currentPlayer = (game.currentPlayer == 'x') ? 'o' : 'x';
+                        game.currentPlayer = (game.currentPlayer == 'X') ? 'O' : 'X';
                     }
                     break;
                 }
@@ -440,7 +438,7 @@ void DrawGameOverScreen(void)
     const char* resultText;
     Color resultColor;
     
-    if (game.winner == '_')
+    if (game.winner == ' ')
     {
         resultText = "IT'S A DRAW!";
         resultColor = colorWarning;
