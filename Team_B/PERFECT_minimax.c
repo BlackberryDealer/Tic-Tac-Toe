@@ -93,13 +93,56 @@ static int minimax_masks(int playerMask, int oppMask, int depth,
 }
 
 /*
- * findBestMove: returns the best move for 'player'
- * using alpha-beta-optimized mask minimax.
+ * Count the number of set bits in a mask (number of pieces)
  */
-struct Move findBestMovePerfect(char board[3][3]) {
-    int maskP = 0, maskO = 0;
-    boardToMasks(board, &maskP, &maskO);
-    int occupied = maskP | maskO;
+static inline int countBits(int mask) {
+    int count = 0;
+    while (mask) {
+        count += mask & 1;
+        mask >>= 1;
+    }
+    return count;
+}
+
+/*
+ * findBestMove: returns the best move for the AI
+ * using alpha-beta-optimized mask minimax.
+ * aiSymbol: 'X' or 'O' - explicitly tells the function which symbol the AI is playing
+ */
+struct Move findBestMovePerfect(char board[3][3], char aiSymbol) {
+    int maskX = 0, maskO = 0;
+    boardToMasks(board, &maskX, &maskO);
+    int occupied = maskX | maskO;
+
+    // Determine which symbol the AI is playing
+    // If board is empty, use the provided aiSymbol
+    // Otherwise, determine from piece counts (the player with fewer pieces is the one whose turn it is)
+    int countX = countBits(maskX);
+    int countO = countBits(maskO);
+    
+    int aiMask, oppMask;
+    if (countX == 0 && countO == 0) {
+        // Empty board - use the provided aiSymbol to determine which mask to use
+        if (aiSymbol == 'X') {
+            aiMask = maskX;
+            oppMask = maskO;
+        } else {
+            aiMask = maskO;
+            oppMask = maskX;
+        }
+    } else {
+        // Board has moves - determine from piece counts
+        // The player with fewer pieces (or equal) is the one whose turn it is
+        if (countX <= countO) {
+            // X has fewer or equal pieces, so it's X's turn (AI is X)
+            aiMask = maskX;
+            oppMask = maskO;
+        } else {
+            // O has fewer pieces, so it's O's turn (AI is O)
+            aiMask = maskO;
+            oppMask = maskX;
+        }
+    }
 
     int bestVal = -1000;
     struct Move bestMove = { -1, -1 };
@@ -109,8 +152,8 @@ struct Move findBestMovePerfect(char board[3][3]) {
         int bit = (1 << pos);
         if (occupied & bit) continue;
 
-        int newPlayer = maskP | bit;
-        int moveVal = minimax_masks(newPlayer, maskO, 1, -1000, 1000, false);
+        int newAiMask = aiMask | bit;
+        int moveVal = minimax_masks(newAiMask, oppMask, 1, -1000, 1000, false);
 
         if (moveVal > bestVal) {
             bestVal = moveVal;

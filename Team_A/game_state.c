@@ -151,7 +151,7 @@ void MakeAIMove(void)
     // DIFF_HARD = 1 (Perfect), DIFF_MEDIUM = 2 (Imperfect), DIFF_EASY = 3 (Model)
     // Board format is now standardized, so we can pass it directly
     if (game.difficulty == DIFF_HARD)
-        bestMove = findBestMovePerfect(game.board);
+        bestMove = findBestMovePerfect(game.board, game.aiSymbol);
     else if (game.difficulty == DIFF_MEDIUM)
         bestMove = findBestMoveImperfect(game.board);
     else // DIFF_EASY

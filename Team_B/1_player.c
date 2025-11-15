@@ -69,7 +69,7 @@ void playOnePlayer()
             // Select move depending on difficulty chosen
             struct Move thisMove;
             if (difficulty == 1)
-                thisMove = findBestMovePerfect(tempBoard);   // Perfect AI
+                thisMove = findBestMovePerfect(tempBoard, COMPUTERMOVE);   // Perfect AI (computer is 'O')
             else if (difficulty == 2)
                 thisMove = findBestMoveImperfect(tempBoard); // Imperfect AI
             else if (difficulty == 3)

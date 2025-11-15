@@ -6,7 +6,8 @@ struct Move {
 };
 
 // Perfect AI
-struct Move findBestMovePerfect(char board[3][3]);
+// aiSymbol: 'X' or 'O' - the symbol the AI is playing
+struct Move findBestMovePerfect(char board[3][3], char aiSymbol);
 
 // Imperfect AI
 struct Move findBestMoveImperfect(char board[3][3]);
