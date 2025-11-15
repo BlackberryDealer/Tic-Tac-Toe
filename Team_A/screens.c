@@ -426,17 +426,14 @@ void HandleGameScreen(void)
 
 void DrawGameOverScreen(void)
 {
-    // Draw semi-transparent overlay over the entire screen
-    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 180});
-    
-    // Calculate center positions
-    float panelWidth = 400;
-    float panelHeight = 300;
+    // Draw semi-transparent panel at TOP of screen (not covering board)
+    float panelWidth = 500;
+    float panelHeight = 200;
     float panelX = SCREEN_WIDTH/2 - panelWidth/2;
-    float panelY = SCREEN_HEIGHT/2 - panelHeight/2;
+    float panelY = 20;  // Near top, not center
     
-    // Result panel
-    DrawRectangleRec((Rectangle){panelX, panelY, panelWidth, panelHeight}, colorLight);
+    // Semi-transparent background
+    DrawRectangleRec((Rectangle){panelX, panelY, panelWidth, panelHeight}, (Color){44, 62, 80, 230});
     DrawRectangleLinesEx((Rectangle){panelX, panelY, panelWidth, panelHeight}, 4, colorPrimary);
     
     // Result text
@@ -475,24 +472,24 @@ void DrawGameOverScreen(void)
         }
     }
     
-    int resultWidth = MeasureText(resultText, 50);
-    DrawText(resultText, SCREEN_WIDTH/2 - resultWidth/2, panelY + 50, 50, resultColor);
+    int resultWidth = MeasureText(resultText, 45);
+    DrawText(resultText, SCREEN_WIDTH/2 - resultWidth/2, panelY + 30, 45, resultColor);
     
     // Score display
     char scoreText[128];
     if (game.mode == MODE_ONE_PLAYER)
-        sprintf(scoreText, "You: %d  |  AI: %d  |  Draws: %d", 
+        sprintf(scoreText, "You: %d | AI: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
     else
-        sprintf(scoreText, "P1: %d  |  P2: %d  |  Draws: %d", 
+        sprintf(scoreText, "P1: %d | P2: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
     
-    int scoreWidth = MeasureText(scoreText, 20);
-    DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, panelY + 120, 20, colorDark);
+    int scoreWidth = MeasureText(scoreText, 18);
+    DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, panelY + 90, 18, colorLight);
     
-    // Buttons - positioned relative to panel center, not screen center
-    Rectangle playAgainButton = CreateButton(SCREEN_WIDTH/2, panelY + panelHeight - 110, 250, 60);
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2, panelY + panelHeight - 40, 250, 60);
+    // Buttons - horizontal layout at bottom of panel
+    Rectangle playAgainButton = CreateButton(SCREEN_WIDTH/2 - 130, panelY + 150, 220, 45);
+    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 130, panelY + 150, 220, 45);
     
     DrawButton(playAgainButton, "PLAY AGAIN", colorSecondary);
     DrawButton(menuButton, "MAIN MENU", colorDark);
@@ -500,12 +497,10 @@ void DrawGameOverScreen(void)
 
 void HandleGameOverScreen(void)
 {
-    // Match the positioning from DrawGameOverScreen
-    float panelHeight = 300;
-    float panelY = SCREEN_HEIGHT/2 - panelHeight/2;
+    float panelY = 20;  // Match the position from DrawGameOverScreen
     
-    Rectangle playAgainButton = CreateButton(SCREEN_WIDTH/2, panelY + panelHeight - 110, 250, 60);
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2, panelY + panelHeight - 40, 250, 60);
+    Rectangle playAgainButton = CreateButton(SCREEN_WIDTH/2 - 130, panelY + 150, 220, 45);
+    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 130, panelY + 150, 220, 45);
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {

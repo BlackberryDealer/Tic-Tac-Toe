@@ -73,6 +73,7 @@ int main(void)
                 DrawGameScreen();
                 break;
             case SCREEN_GAME_OVER:
+                DrawGameScreen();
                 DrawGameOverScreen();
                 break;
         }
