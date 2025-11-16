@@ -149,10 +149,8 @@ typedef struct {
     int draws;
     bool isFullscreen;
     ThemeID currentTheme; // Current theme ID
-    // --- ADD THESE ---
     char saveMessage[64];
     float saveMessageTimer;
-    // --- END ADD ---
 } GameState;
 
 // ============================================================================

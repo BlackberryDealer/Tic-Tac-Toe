@@ -110,8 +110,8 @@ void InitGame(void)
     
     // Initialize UI settings
     game.isFullscreen = false;
-    game.saveMessageTimer = 0.0f; // --- ADD THIS ---
-    game.saveMessage[0] = '\0';   // --- ADD THIS ---
+    game.saveMessageTimer = 0.0f; 
+    game.saveMessage[0] = '\0';   
     ChangeTheme(THEME_DEFAULT);
     
     // Initialize board
