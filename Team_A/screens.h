@@ -1,10 +1,11 @@
 /**
  * @file screens.h
  * @brief Screen management module for Tic-Tac-Toe game
- * 
- * This module handles all screen rendering and input processing for
+ * * This module handles all screen rendering and input processing for
  * different game screens including start menu, game screen, settings,
  * and game over screens. Each screen has separate draw and handle functions.
+ * * This file just contains the function prototypes (declarations).
+ * The implementations (definitions) are in `screens.c`.
  */
 
 #ifndef SCREENS_H
@@ -13,7 +14,7 @@
 #include <stdbool.h>
 
 // ============================================================================
-// SCREEN DRAWING FUNCTIONS
+// SCREEN DRAWING FUNCTIONS (The "View")
 // ============================================================================
 
 /**
@@ -58,13 +59,12 @@ void DrawGameScreen(void);
 void DrawGameOverScreen(void);
 
 // ============================================================================
-// SCREEN INPUT HANDLING FUNCTIONS
+// SCREEN INPUT HANDLING FUNCTIONS (The "Controller")
 // ============================================================================
 
 /**
  * @brief Process input for the start screen
- * 
- * Handles button clicks for play, instructions, themes, and fullscreen toggle
+ * * Handles button clicks for play, instructions, themes, and fullscreen toggle
  */
 void HandleStartScreen(void);
 
