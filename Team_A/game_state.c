@@ -1,17 +1,21 @@
 /**
  * @file game_state.c
  * @brief Implementation of game state management functions
- * 
- * This file implements all game state operations including initialization,
+ * * This file implements all game state operations including initialization,
  * board management, win checking, and theme management.
  */
 
 #include "game_state.h"
-#include "../Team_B/minimax.h"
-#include <stdio.h> // --- New for file saving ---
+#include "../Team_B/minimax.h" // For AI move functions
+#include <stdio.h> // For file I/O (fopen, fwrite, fread, fclose)
+#include <string.h> // For sprintf
 
-// --- NEW allThemes array ---
-
+/**
+ * @brief Static definition of all available themes.
+ * * This array stores the color palettes for every theme. The `ThemeID` enum
+ * is used as a direct index into this array (e.g., `allThemes[THEME_DARK]`).
+ * Defining them here keeps all theme data neatly organized in one place.
+ */
 Theme allThemes[THEME_COUNT] = {
     [THEME_DEFAULT] = {
         .name = "Default",
@@ -24,15 +28,15 @@ Theme allThemes[THEME_COUNT] = {
         .light = {255, 255, 255, 255}         // White
     },
     [THEME_DARK] = {
-    .name = "Dark",
-    .primary = {52, 152, 219, 255},      // Blue
-    .secondary = {46, 204, 113, 255},    // Green
-    .accent = {231, 76, 60, 255},         // Red
-    .warning = {241, 196, 15, 255},       // Yellow
-    .background = {30, 40, 50, 255},       // Very Dark Blue (Page BG)
-    .dark = {44, 62, 80, 255},           // Dark Blue-Gray (Text on light boxes)
-    .light = {236, 240, 241, 255}         // Light Gray (Text on dark BG)
-},
+        .name = "Dark",
+        .primary = {52, 152, 219, 255},      // Blue
+        .secondary = {46, 204, 113, 255},    // Green
+        .accent = {231, 76, 60, 255},         // Red
+        .warning = {241, 196, 15, 255},       // Yellow
+        .background = {30, 40, 50, 255},       // Very Dark Blue (Page BG)
+        .dark = {44, 62, 80, 255},           // Dark Blue-Gray (Text on light boxes)
+        .light = {236, 240, 241, 255}         // Light Gray (Text on dark BG)
+    },
     [THEME_FOREST] = {
         .name = "Forest",
         .primary = {46, 139, 87, 255},        // Sea Green
@@ -69,7 +73,11 @@ Theme allThemes[THEME_COUNT] = {
 // GLOBAL VARIABLE DEFINITIONS
 // ============================================================================
 
-/** Global UI color variables (initialized to black, updated by ChangeTheme) */
+/** * Global UI color variables.
+ * These are the *actual* colors used by all drawing functions.
+ * `ChangeTheme` works by copying colors from `allThemes` into these variables.
+ * This decouples drawing logic from specific theme data.
+ */
 Color colorPrimary = {0};
 Color colorSecondary = {0};
 Color colorAccent = {0};
@@ -78,13 +86,23 @@ Color colorBackground = {0};
 Color colorDark = {0};
 Color colorLight = {0};
 
-/** Global game state instance (initialized to zero) */
+/** * Global game state instance.
+ * This is the single, global "singleton" object that holds all game
+ * state. It is initialized to all-zeros by default, and then
+ * properly set by `InitGame()`.
+ */
 GameState game = {0};
 
 // ============================================================================
 // GAME INITIALIZATION FUNCTIONS
 // ============================================================================
 
+/**
+ * @brief Initializes the game state for the first launch.
+ * * This function is called *once* at startup by `main.c`.
+ * It sets all game parameters to their default values, applies the
+ * default theme, and resets the board.
+ */
 void InitGame(void)
 {
     // Initialize screen and game mode
@@ -101,7 +119,7 @@ void InitGame(void)
     game.gameOver = false;
     game.winner = ' ';
     game.aiTurn = false;
-    game.aiMoveTimer = 0.5f;
+    game.aiMoveTimer = 0.5f; // Default AI "thinking" time
     
     // Initialize statistics
     game.player1Wins = 0;
@@ -110,14 +128,20 @@ void InitGame(void)
     
     // Initialize UI settings
     game.isFullscreen = false;
-    game.saveMessageTimer = 0.0f; // --- ADD THIS ---
-    game.saveMessage[0] = '\0';   // --- ADD THIS ---
-    ChangeTheme(THEME_DEFAULT);
+    game.saveMessageTimer = 0.0f; // Timer starts at 0 (hidden)
+    game.saveMessage[0] = '\0';   // Clear save message buffer
+    ChangeTheme(THEME_DEFAULT);   // Apply the default theme
     
     // Initialize board
     ResetBoard();
 }
 
+/**
+ * @brief Resets the board for a new game.
+ * * This is called by `InitGame` but also by the "Play Again" button.
+ * It's a separate function because we often want to start a new
+ * round *without* resetting scores, theme, or game mode.
+ */
 void ResetBoard(void)
 {
     // Clear all board cells
@@ -128,14 +152,14 @@ void ResetBoard(void)
     }
     
     // Reset game state
-    game.currentPlayer = game.humanSymbol;
+    game.currentPlayer = game.humanSymbol; // Human (or P1) always starts
     game.gameOver = false;
     game.winner = ' ';
     
-    // If human is O in one-player mode, AI goes first
+    // If human is 'O' in 1-player mode, the AI ('X') must go first.
     game.aiTurn = (game.mode == MODE_ONE_PLAYER && game.humanSymbol == 'O');
-    game.aiMoveTimer = 0.5f;  // Delay before AI makes move
-    game.saveMessageTimer = 0.0f; // --- ADD THIS ---
+    game.aiMoveTimer = 0.5f;  // Delay before AI makes its first move
+    game.saveMessageTimer = 0.0f; // Hide any save messages
 }
 
 // ============================================================================
@@ -145,13 +169,19 @@ void ResetBoard(void)
 // Forward declaration for helper function
 static void updateWinStatistics(void);
 
-bool CheckWinner(void)      // To check if there's a winner
+/**
+ * @brief Checks all 8 win conditions (3 rows, 3 cols, 2 diagonals).
+ * * This function is called after every move. If a winner is found,
+ * it sets `game.winner` and calls the `updateWinStatistics` helper
+ * before returning `true`.
+ */
+bool CheckWinner(void)
 {
     // Check all rows for three in a row
-    for (int i = 0; i < 3; i++) {       // For each row, stops at i = 2 because 3x3 board
-        if (game.board[i][0] != ' ' &&  // [i][0] - i is row, 0 is first column
-            game.board[i][0] == game.board[i][1] &&  // compre first and second column
-            game.board[i][1] == game.board[i][2]) {  // compare second and third column
+    for (int i = 0; i < 3; i++) {
+        if (game.board[i][0] != ' ' &&
+            game.board[i][0] == game.board[i][1] &&
+            game.board[i][1] == game.board[i][2]) {
             game.winner = game.board[i][0];
             updateWinStatistics();
             return true;
@@ -159,7 +189,6 @@ bool CheckWinner(void)      // To check if there's a winner
     }
     
     // Check all columns for three in a row
-    // Same as above but transposed, so [0][i], [1][i], [2][i]
     for (int i = 0; i < 3; i++) {
         if (game.board[0][i] != ' ' && 
             game.board[0][i] == game.board[1][i] && 
@@ -171,7 +200,6 @@ bool CheckWinner(void)      // To check if there's a winner
     }
     
     // Check main diagonal (top-left to bottom-right)
-    // Same logic as rows/columns but fixed indices - fixed because only one such instance of top-left to bottom-right diagonal
     if (game.board[0][0] != ' ' && 
         game.board[0][0] == game.board[1][1] && 
         game.board[1][1] == game.board[2][2]) {
@@ -181,7 +209,6 @@ bool CheckWinner(void)      // To check if there's a winner
     }
     
     // Check anti-diagonal (top-right to bottom-left)
-    // Same logic as rows/columns but fixed indices - fixed because only one such instance of top-right to bottom-left diagonal
     if (game.board[0][2] != ' ' && 
         game.board[0][2] == game.board[1][1] && 
         game.board[1][1] == game.board[2][0]) {
@@ -190,26 +217,27 @@ bool CheckWinner(void)      // To check if there's a winner
         return true;
     }
     
+    // No winner found
     return false;
 }
 
 /**
- * @brief Helper function to update win statistics
- * 
- * Updates player1Wins or player2Wins based on the winner and game mode.
- * This is separated to avoid code duplication in CheckWinner().
+ * @brief Helper function to update win statistics.
+ * * This logic is separated from `CheckWinner` to keep that function
+ * clean and focused on just *finding* the win. This function handles
+ * the "what to do *after* a win" logic, which differs based on game mode.
  */
 static void updateWinStatistics(void)
 {
     if (game.mode == MODE_ONE_PLAYER) {
-        // In one-player mode, track human vs AI
+        // In one-player mode, 'player1Wins' is human, 'player2Wins' is AI
         if (game.winner == game.humanSymbol) {
             game.player1Wins++;
         } else {
             game.player2Wins++;
         }
     } else {
-        // In two-player mode, track X vs O
+        // In two-player mode, 'player1Wins' is X, 'player2Wins' is O
         if (game.winner == 'X') {
             game.player1Wins++;
         } else {
@@ -218,19 +246,26 @@ static void updateWinStatistics(void)
     }
 }
 
+/**
+ * @brief Checks if the board is full (a draw condition).
+ * * Iterates over the board. If any empty cell (' ') is found,
+ * the board is not full, and it returns `false`.
+ * If no empty cells are found, it's a draw, so it increments
+ * the draw counter and returns `true`.
+ */
 bool IsBoardFull(void)
 {
     // Check if any cell is empty
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (game.board[i][j] == ' ') {
-                return false;
+                return false; // Found an empty cell, not full
             }
         }
     }
     
     // Board is full - no winner, it's a draw
-    game.winner = ' ';
+    game.winner = ' '; // Ensure winner is ' ' for draw
     game.draws++;
     return true;
 }
@@ -239,13 +274,18 @@ bool IsBoardFull(void)
 // AI MOVE EXECUTION
 // ============================================================================
 
+/**
+ * @brief Acts as a dispatcher to call the correct AI function.
+ * * This high-level function reads `game.difficulty` and selects
+ * the appropriate AI move-finding algorithm from the external
+ * `minimax.h` library. This keeps `game_state.c` clean and
+ * independent of the complex AI logic itself.
+ */
 void MakeAIMove(void)
 {
     struct Move bestMove;
     
     // Select AI algorithm based on difficulty setting
-    // DIFF_HARD = 1 (Perfect minimax), DIFF_MEDIUM = 2 (Imperfect minimax), 
-    // DIFF_EASY = 3 (Model-based)
     if (game.difficulty == DIFF_HARD) {
         // Perfect AI - unbeatable, uses alpha-beta pruning
         bestMove = findBestMovePerfect(game.board, game.aiSymbol);
@@ -268,6 +308,14 @@ void MakeAIMove(void)
 // THEME MANAGEMENT
 // ============================================================================
 
+/**
+ * @brief Applies a new theme to the game.
+ * * This is the core of the theme system. It validates the theme ID,
+ * updates the `game.currentTheme` state, and then *copies* all colors
+ * from the `allThemes` array into the global `Color` variables.
+ * Every drawing function uses these global colors, so they will
+ * all update on the next frame.
+ */
 void ChangeTheme(ThemeID newTheme)
 {
     // Validate theme ID (prevent out-of-bounds access)
@@ -288,16 +336,29 @@ void ChangeTheme(ThemeID newTheme)
     colorLight = allThemes[newTheme].light;
 }
 
-// --- NEW FUNCTION FOR FILE SAVING ---
+// ============================================================================
+// SAVE/LOAD FUNCTIONS
+// ============================================================================
+
+/**
+ * @brief Saves the *entire* GameState struct to a binary file.
+ * * This uses `fwrite` to write the raw bytes of the `game` struct
+ * directly to "save.dat". This is simple but has drawbacks:
+ * 1. Not portable (byte order, struct padding).
+ * 2. Fragile: If `GameState` struct changes, old saves are invalid.
+ * * It also sets a UI message (`game.saveMessage`) to give the user
+ * feedback on the operation.
+ */
 void SaveGame(void)
 {
-    FILE* file = fopen("save.dat", "wb");
+    FILE* file = fopen("save.dat", "wb"); // "wb" = Write Binary
     if (file == NULL) {
         sprintf(game.saveMessage, "ERROR: Save Failed!");
         game.saveMessageTimer = 2.0f; // Show message for 2 seconds
         return;
     }
 
+    // Write the entire 'game' struct (1 item of size GameState) to the file
     size_t itemsWritten = fwrite(&game, sizeof(GameState), 1, file);
     fclose(file);
 
@@ -309,17 +370,27 @@ void SaveGame(void)
     game.saveMessageTimer = 2.0f; // Show message for 2 seconds
 }
 
-// --- ADD THIS ENTIRE FUNCTION ---
-// In Team_A/game_state.c
-
+/**
+ * @brief Loads the GameState from "save.dat".
+ * * This function contains critical safety logic to prevent crashes.
+ * * 1. It remembers the user's *current* theme.
+ * 2. It reads the file into a *temporary* `tempGame` struct, NOT the
+ * live `game` struct.
+ * 3. It *validates* the read (`itemsRead == 1`). If the file is empty or
+ * corrupt, it aborts, leaving the current game state untouched.
+ * 4. Only on success does it copy `tempGame` into the global `game`.
+ * 5. It *restores* the user's original theme (a design choice).
+ * 6. It *must* call `ChangeTheme` to re-apply the theme's colors,
+ * as the global `Color` variables are not part of the saved struct.
+ */
 bool LoadGame(void)
 {
     // 1. Remember the user's currently active theme
     ThemeID currentThemeBeforeLoad = game.currentTheme;
 
-    FILE* file = fopen("save.dat", "rb");
+    FILE* file = fopen("save.dat", "rb"); // "rb" = Read Binary
     if (file == NULL) {
-        return false; // No file
+        return false; // No save file found
     }
 
     // 2. Read into a temporary variable, NOT the real 'game'
@@ -327,19 +398,22 @@ bool LoadGame(void)
     size_t itemsRead = fread(&tempGame, sizeof(GameState), 1, file);
     fclose(file);
 
+    // 3. CRITICAL: Check if the read was successful.
+    // If itemsRead != 1, the file was empty or corrupted. Abort.
+    // This check prevents a crash from loading bad data.
     if (itemsRead != 1) {
-        // 3. The file was empty or corrupted. Abort.
-        // This is what stops the crash.
         return false;
     }
 
     // 4. Success! Now we can safely update the real 'game'
     game = tempGame;
     
-    // 5. Restore the user's active theme (as you wanted)
+    // 5. Restore the user's active theme (as requested)
     game.currentTheme = currentThemeBeforeLoad;
     
     // 6. Re-apply the colors for the active theme
+    // This is necessary because the global Color... variables
+    // are not part of the GameState struct and were not loaded.
     ChangeTheme(game.currentTheme);
     
     return true;
