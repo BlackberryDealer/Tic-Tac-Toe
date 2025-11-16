@@ -5,9 +5,6 @@
  * This module provides three different AI implementations using minimax
  * algorithms with varying levels of play strength. All implementations
  * use bitboard representations internally for efficient game state evaluation.
- * 
- * @author Team B
- * @date 2025
  */
 
 #ifndef MINIMAX_H

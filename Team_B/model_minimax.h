@@ -5,9 +5,6 @@
  * This module provides a logistic regression model for evaluating
  * board positions. The model was trained on game data and provides
  * a different playing style compared to minimax-based AIs.
- * 
- * @author Team B
- * @date 2025
  */
 
 #ifndef MODEL_MINIMAX_H

@@ -12,9 +12,6 @@
  *  6 7 8
  * 
  * Empty cells are represented by ' ' (space character).
- * 
- * @author Team B
- * @date 2025
  */
 
 #include <stdio.h>

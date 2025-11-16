@@ -5,9 +5,6 @@
  * This module provides functions for displaying the game board,
  * checking game status (win/draw/ongoing), and initializing the board.
  * Used by both console and GUI versions of the game.
- * 
- * @author Team B
- * @date 2025
  */
 
 #ifndef GAME_H

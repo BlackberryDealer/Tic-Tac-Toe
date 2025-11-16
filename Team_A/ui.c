@@ -4,9 +4,6 @@
  * 
  * This file implements reusable UI components for creating interactive
  * buttons with hover effects and consistent styling.
- * 
- * @author Team A
- * @date 2025
  */
 
 #include "ui.h"

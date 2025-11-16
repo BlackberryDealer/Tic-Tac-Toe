@@ -5,9 +5,6 @@
  * This file contains the main game loop that handles window initialization,
  * screen navigation, input processing, and rendering. Uses Raylib for
  * graphics and window management.
- * 
- * @author Team A & Team B
- * @date 2025
  */
 
 #include "raylib.h"

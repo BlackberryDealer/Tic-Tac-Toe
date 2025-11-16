@@ -5,9 +5,6 @@
  * This module implements an AI that uses a pre-trained logistic regression
  * model to evaluate board positions. The model provides a different playing
  * style compared to minimax-based AIs, making different types of mistakes.
- * 
- * @author Team B
- * @date 2025
  */
 
 #include <stdio.h>

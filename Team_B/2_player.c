@@ -5,9 +5,6 @@
  * This module implements the two-player game mode where two humans
  * take turns playing against each other on the same device.
  * Uses shared board display and status checking functions for consistency.
- * 
- * @author Team B
- * @date 2025
  */
 
 #include <stdio.h>

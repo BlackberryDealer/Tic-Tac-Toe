@@ -4,9 +4,6 @@
  * 
  * This file implements console-based board display and game status
  * checking functions. Used by both console and GUI versions of the game.
- * 
- * @author Team B
- * @date 2025
  */
 
 #include <stdbool.h>

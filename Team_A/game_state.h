@@ -6,9 +6,6 @@
  * player information, game settings, and theme management. It provides
  * functions to initialize, reset, and manage the game state throughout
  * the application lifecycle.
- * 
- * @author Team A
- * @date 2025
  */
 
 #ifndef GAME_STATE_H

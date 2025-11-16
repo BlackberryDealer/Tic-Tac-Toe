@@ -5,9 +5,6 @@
  * This module implements the one-player game mode where a human
  * plays against an AI opponent. Supports multiple AI difficulty levels
  * (Perfect, Imperfect, Model-based).
- * 
- * @author Team B
- * @date 2025
  */
 
 #include <stdio.h>

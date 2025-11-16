@@ -5,9 +5,6 @@
  * This module provides reusable UI components and utilities for creating
  * interactive buttons and UI elements. Functions handle button creation,
  * hover detection, and rendering with consistent styling.
- * 
- * @author Team A
- * @date 2025
  */
 
 #ifndef UI_H

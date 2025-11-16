@@ -4,9 +4,6 @@
  * 
  * This module implements the two-player game mode where two humans
  * take turns playing against each other on the same device.
- * 
- * @author Team B
- * @date 2025
  */
 
 #ifndef TWO_PLAYER_H

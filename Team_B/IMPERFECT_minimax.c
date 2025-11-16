@@ -8,9 +8,6 @@
  * 2. Randomizing move order (introduces variability)
  * 
  * Uses bitboard representation internally for efficiency.
- * 
- * @author Team B
- * @date 2025
  */
 
 #include <stdio.h>

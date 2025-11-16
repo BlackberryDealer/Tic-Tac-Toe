@@ -5,9 +5,6 @@
  * This module handles all screen rendering and input processing for
  * different game screens including start menu, game screen, settings,
  * and game over screens. Each screen has separate draw and handle functions.
- * 
- * @author Team A
- * @date 2025
  */
 
 #ifndef SCREENS_H

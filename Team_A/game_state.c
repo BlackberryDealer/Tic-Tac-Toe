@@ -4,9 +4,6 @@
  * 
  * This file implements all game state operations including initialization,
  * board management, win checking, and theme management.
- * 
- * @author Team A
- * @date 2025
  */
 
 #include "game_state.h"
