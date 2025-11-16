@@ -133,6 +133,7 @@ typedef enum {
  * - Game status (winner, game over flag) - (gameOver, winner)
  * - Statistics (wins, draws) - (player1Wins, player2Wins, draws)
  * - UI settings (theme, fullscreen) - (isFullscreen, currentTheme)
+ *  * These are called
  */
 typedef struct {
     GameScreen screen;
