@@ -13,12 +13,9 @@
 
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdio.h> // --- NEW for file saving --
 
-// ============================================================================
-// CONSTANTS AND MACROS
-// ============================================================================
-
-/** Screen dimensions for responsive design (dynamically retrieved) */
+// Screen dimensions for responsive design
 #define SCREEN_WIDTH GetScreenWidth()
 #define SCREEN_HEIGHT GetScreenHeight()
 
@@ -151,7 +148,11 @@ typedef struct {
     int player2Wins;
     int draws;
     bool isFullscreen;
-    ThemeID currentTheme;  /**< Currently active theme ID */
+    ThemeID currentTheme; // Current theme ID
+    // --- ADD THESE ---
+    char saveMessage[64];
+    float saveMessageTimer;
+    // --- END ADD ---
 } GameState;
 
 // ============================================================================
@@ -219,15 +220,11 @@ bool IsBoardFull(void);
  * Updates the current player after the move.
  */
 void MakeAIMove(void);
+void ChangeTheme(ThemeID newTheme); //new for themes
 
-/**
- * @brief Change the active UI theme
- * 
- * Switches to the specified theme and updates all global color
- * variables to match the new theme's palette.
- * 
- * @param newTheme The theme ID to switch to
- */
-void ChangeTheme(ThemeID newTheme);
+// --- New for file saving ---
+void SaveGame(void);
+bool LoadGame(void);
+// --- END ADD ---
 
 #endif // GAME_STATE_H
