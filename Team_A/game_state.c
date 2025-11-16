@@ -149,13 +149,13 @@ void ResetBoard(void)
 // Forward declaration for helper function
 static void updateWinStatistics(void);
 
-bool CheckWinner(void)
+bool CheckWinner(void)      // To check if there's a winner
 {
     // Check all rows for three in a row
-    for (int i = 0; i < 3; i++) {
-        if (game.board[i][0] != ' ' && 
-            game.board[i][0] == game.board[i][1] && 
-            game.board[i][1] == game.board[i][2]) {
+    for (int i = 0; i < 3; i++) {       // For each row, stops at i = 2 because 3x3 board
+        if (game.board[i][0] != ' ' &&  // [i][0] - i is row, 0 is first column
+            game.board[i][0] == game.board[i][1] &&  // compre first and second column
+            game.board[i][1] == game.board[i][2]) {  // compare second and third column
             game.winner = game.board[i][0];
             updateWinStatistics();
             return true;
@@ -163,6 +163,7 @@ bool CheckWinner(void)
     }
     
     // Check all columns for three in a row
+    // Same as above but transposed, so [0][i], [1][i], [2][i]
     for (int i = 0; i < 3; i++) {
         if (game.board[0][i] != ' ' && 
             game.board[0][i] == game.board[1][i] && 
@@ -174,6 +175,7 @@ bool CheckWinner(void)
     }
     
     // Check main diagonal (top-left to bottom-right)
+    // Same logic as rows/columns but fixed indices - fixed because only one such instance of top-left to bottom-right diagonal
     if (game.board[0][0] != ' ' && 
         game.board[0][0] == game.board[1][1] && 
         game.board[1][1] == game.board[2][2]) {
@@ -183,6 +185,7 @@ bool CheckWinner(void)
     }
     
     // Check anti-diagonal (top-right to bottom-left)
+    // Same logic as rows/columns but fixed indices - fixed because only one such instance of top-right to bottom-left diagonal
     if (game.board[0][2] != ' ' && 
         game.board[0][2] == game.board[1][1] && 
         game.board[1][1] == game.board[2][0]) {

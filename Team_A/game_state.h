@@ -96,6 +96,9 @@ typedef enum {
 // ============================================================================
 // DIFFICULTY CONSTANTS
 // ============================================================================
+// Define difficulty levels for AI behavior. Chose define instead of enum for easier
+// integration with existing code structure.
+// Enum is more suited for distinct states, while these constants represent levels of difficulty.
 
 /**
  * @def DIFF_EASY
@@ -123,13 +126,13 @@ typedef enum {
  * @struct GameState
  * @brief Central game state structure containing all game information
  * 
- * This structure maintains the complete state of the game including:
- * - Current screen and mode
- * - Board state (3x3 grid)
- * - Player symbols and turn information
- * - Game status (winner, game over flag)
- * - Statistics (wins, draws)
- * - UI settings (theme, fullscreen)
+ * This structure maintains the complete state of the game:
+ * - Current screen and mode - (screen/mode)
+ * - Board state (3x3 grid) - (board)
+ * - Player symbols and turn information - (human/AISymbols, currentPlayer)
+ * - Game status (winner, game over flag) - (gameOver, winner)
+ * - Statistics (wins, draws) - (player1Wins, player2Wins, draws)
+ * - UI settings (theme, fullscreen) - (isFullscreen, currentTheme)
  */
 typedef struct {
     GameScreen screen;

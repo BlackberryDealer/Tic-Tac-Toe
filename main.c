@@ -35,10 +35,10 @@ int main(void)
     while (!WindowShouldClose())
     {
         // Process input based on current screen
-        switch (game.screen)
+        switch (game.screen)        // switch based on current screen user is on
         {
-            case SCREEN_START:
-                HandleStartScreen();
+            case SCREEN_START:          // case [current screen user is on]
+                HandleStartScreen();    // call corresponding handle function
                 break;
             case SCREEN_MODE_SELECT:
                 HandleModeSelectScreen();
@@ -69,6 +69,7 @@ int main(void)
         // ====================================================================
         // RENDERING PHASE
         // ====================================================================
+        // Same style as before, but now includes theme select screen and is for rendering
         BeginDrawing();
         ClearBackground(colorBackground);
         
