@@ -1,8 +1,27 @@
+/**
+ * @file game_state.c
+ * @brief Implementation of game state management functions
+ * 
+ * This file implements all game state operations including initialization,
+ * board management, win checking, and theme management.
+ * 
+ * @author Team A
+ * @date 2025
+ */
+
 #include "game_state.h"
 #include "../Team_B/minimax.h"
 
-// --- NEW allThemes array ---
+// ============================================================================
+// THEME DEFINITIONS
+// ============================================================================
 
+/**
+ * @brief Array of all available color themes
+ * 
+ * Each theme provides a complete color palette for the UI.
+ * Themes are indexed by ThemeID enum values.
+ */
 Theme allThemes[THEME_COUNT] = {
     [THEME_DEFAULT] = {
         .name = "Default",
@@ -56,7 +75,11 @@ Theme allThemes[THEME_COUNT] = {
     }
 };
 
-// UI Colors definitions
+// ============================================================================
+// GLOBAL VARIABLE DEFINITIONS
+// ============================================================================
+
+/** Global UI color variables (initialized to black, updated by ChangeTheme) */
 Color colorPrimary = {0};
 Color colorSecondary = {0};
 Color colorAccent = {0};
@@ -65,169 +88,201 @@ Color colorBackground = {0};
 Color colorDark = {0};
 Color colorLight = {0};
 
-// Global game state definition
+/** Global game state instance (initialized to zero) */
 GameState game = {0};
+
+// ============================================================================
+// GAME INITIALIZATION FUNCTIONS
+// ============================================================================
 
 void InitGame(void)
 {
+    // Initialize screen and game mode
     game.screen = SCREEN_START;
     game.mode = MODE_ONE_PLAYER;
     game.difficulty = DIFF_MEDIUM;
+    
+    // Initialize player symbols
     game.humanSymbol = 'X';
     game.aiSymbol = 'O';
     game.currentPlayer = 'X';
+    
+    // Initialize game status
     game.gameOver = false;
     game.winner = ' ';
     game.aiTurn = false;
-    game.aiMoveTimer = 0.0f;
+    game.aiMoveTimer = 0.5f;
+    
+    // Initialize statistics
     game.player1Wins = 0;
     game.player2Wins = 0;
     game.draws = 0;
+    
+    // Initialize UI settings
     game.isFullscreen = false;
     ChangeTheme(THEME_DEFAULT);
+    
+    // Initialize board
     ResetBoard();
 }
 
 void ResetBoard(void)
 {
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++)
+    // Clear all board cells
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
             game.board[i][j] = ' ';
+        }
+    }
     
+    // Reset game state
     game.currentPlayer = game.humanSymbol;
     game.gameOver = false;
     game.winner = ' ';
+    
+    // If human is O in one-player mode, AI goes first
     game.aiTurn = (game.mode == MODE_ONE_PLAYER && game.humanSymbol == 'O');
-    game.aiMoveTimer = 0.5f;
+    game.aiMoveTimer = 0.5f;  // Delay before AI makes move
 }
 
-// Check for winner on the board
+// ============================================================================
+// GAME STATUS CHECKING FUNCTIONS
+// ============================================================================
+
+// Forward declaration for helper function
+static void updateWinStatistics(void);
+
 bool CheckWinner(void)
 {
-    // Check rows
+    // Check all rows for three in a row
     for (int i = 0; i < 3; i++) {
         if (game.board[i][0] != ' ' && 
             game.board[i][0] == game.board[i][1] && 
             game.board[i][1] == game.board[i][2]) {
             game.winner = game.board[i][0];
-            if (game.mode == MODE_ONE_PLAYER) {
-                if (game.winner == game.humanSymbol)
-                    game.player1Wins++;
-                else
-                    game.player2Wins++;
-            } else {
-                if (game.winner == 'X')
-                    game.player1Wins++;
-                else
-                    game.player2Wins++;
-            }
+            updateWinStatistics();
             return true;
         }
     }
     
-    // Check columns
+    // Check all columns for three in a row
     for (int i = 0; i < 3; i++) {
         if (game.board[0][i] != ' ' && 
             game.board[0][i] == game.board[1][i] && 
             game.board[1][i] == game.board[2][i]) {
             game.winner = game.board[0][i];
-            if (game.mode == MODE_ONE_PLAYER) {
-                if (game.winner == game.humanSymbol)
-                    game.player1Wins++;
-                else
-                    game.player2Wins++;
-            } else {
-                if (game.winner == 'X')
-                    game.player1Wins++;
-                else
-                    game.player2Wins++;
-            }
+            updateWinStatistics();
             return true;
         }
     }
     
-    // Check diagonals
+    // Check main diagonal (top-left to bottom-right)
     if (game.board[0][0] != ' ' && 
         game.board[0][0] == game.board[1][1] && 
         game.board[1][1] == game.board[2][2]) {
         game.winner = game.board[0][0];
-        if (game.mode == MODE_ONE_PLAYER) {
-            if (game.winner == game.humanSymbol)
-                game.player1Wins++;
-            else
-                game.player2Wins++;
-        } else {
-            if (game.winner == 'X')
-                game.player1Wins++;
-            else
-                game.player2Wins++;
-        }
+        updateWinStatistics();
         return true;
     }
     
+    // Check anti-diagonal (top-right to bottom-left)
     if (game.board[0][2] != ' ' && 
         game.board[0][2] == game.board[1][1] && 
         game.board[1][1] == game.board[2][0]) {
         game.winner = game.board[0][2];
-        if (game.mode == MODE_ONE_PLAYER) {
-            if (game.winner == game.humanSymbol)
-                game.player1Wins++;
-            else
-                game.player2Wins++;
-        } else {
-            if (game.winner == 'X')
-                game.player1Wins++;
-            else
-                game.player2Wins++;
-        }
+        updateWinStatistics();
         return true;
     }
     
     return false;
 }
 
-bool IsBoardFull(void)
+/**
+ * @brief Helper function to update win statistics
+ * 
+ * Updates player1Wins or player2Wins based on the winner and game mode.
+ * This is separated to avoid code duplication in CheckWinner().
+ */
+static void updateWinStatistics(void)
 {
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (game.board[i][j] == ' ')
-                return false;
+    if (game.mode == MODE_ONE_PLAYER) {
+        // In one-player mode, track human vs AI
+        if (game.winner == game.humanSymbol) {
+            game.player1Wins++;
+        } else {
+            game.player2Wins++;
+        }
+    } else {
+        // In two-player mode, track X vs O
+        if (game.winner == 'X') {
+            game.player1Wins++;
+        } else {
+            game.player2Wins++;
         }
     }
+}
+
+bool IsBoardFull(void)
+{
+    // Check if any cell is empty
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (game.board[i][j] == ' ') {
+                return false;
+            }
+        }
+    }
+    
+    // Board is full - no winner, it's a draw
     game.winner = ' ';
     game.draws++;
     return true;
 }
 
+// ============================================================================
+// AI MOVE EXECUTION
+// ============================================================================
+
 void MakeAIMove(void)
 {
     struct Move bestMove;
     
-    // Select AI based on difficulty (Team B's AI functions)
-    // DIFF_HARD = 1 (Perfect), DIFF_MEDIUM = 2 (Imperfect), DIFF_EASY = 3 (Model)
-    // Board format is now standardized, so we can pass it directly
-    if (game.difficulty == DIFF_HARD)
+    // Select AI algorithm based on difficulty setting
+    // DIFF_HARD = 1 (Perfect minimax), DIFF_MEDIUM = 2 (Imperfect minimax), 
+    // DIFF_EASY = 3 (Model-based)
+    if (game.difficulty == DIFF_HARD) {
+        // Perfect AI - unbeatable, uses alpha-beta pruning
         bestMove = findBestMovePerfect(game.board, game.aiSymbol);
-    else if (game.difficulty == DIFF_MEDIUM)
+    } else if (game.difficulty == DIFF_MEDIUM) {
+        // Imperfect AI - makes mistakes, depth-limited minimax
         bestMove = findBestMoveImperfect(game.board);
-    else // DIFF_EASY
+    } else {  // DIFF_EASY
+        // Model-based AI - uses logistic regression evaluation
         bestMove = findBestMoveModel(game.board);
+    }
     
-    // Apply AI move to board
+    // Apply AI move to board if valid
     if (bestMove.row != -1 && bestMove.col != -1) {
         game.board[bestMove.row][bestMove.col] = game.aiSymbol;
-        game.currentPlayer = game.humanSymbol;
+        game.currentPlayer = game.humanSymbol;  // Switch back to human
     }
 }
-// --- ADD THIS ENTIRE FUNCTION ---
+
+// ============================================================================
+// THEME MANAGEMENT
+// ============================================================================
+
 void ChangeTheme(ThemeID newTheme)
 {
-    if (newTheme >= THEME_COUNT) newTheme = THEME_DEFAULT;
+    // Validate theme ID (prevent out-of-bounds access)
+    if (newTheme >= THEME_COUNT) {
+        newTheme = THEME_DEFAULT;
+    }
 
+    // Update current theme
     game.currentTheme = newTheme;
 
-    // Copy the theme's colors into the global variables
-    // that all your draw functions already use.
+    // Copy theme colors to global variables used by all draw functions
     colorPrimary = allThemes[newTheme].primary;
     colorSecondary = allThemes[newTheme].secondary;
     colorAccent = allThemes[newTheme].accent;

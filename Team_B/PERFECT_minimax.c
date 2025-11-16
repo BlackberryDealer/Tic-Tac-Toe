@@ -1,24 +1,40 @@
 /**
- * minimax.c
- * Ultra-efficient, perfect Tic-Tac-Toe minimax using bitboards + alpha-beta pruning
- *
+ * @file PERFECT_minimax.c
+ * @brief Perfect minimax AI implementation with bitboard optimization
+ * 
+ * This module implements an unbeatable Tic-Tac-Toe AI using the minimax
+ * algorithm with alpha-beta pruning. The implementation uses bitboard
+ * representation for efficient game state evaluation.
+ * 
  * Internally uses two 9-bit masks: bits 0..8 correspond to cells:
  *  0 1 2
  *  3 4 5
  *  6 7 8
- *
- * EMPTY char is ' ' (space).
+ * 
+ * Empty cells are represented by ' ' (space character).
+ * 
+ * @author Team B
+ * @date 2025
  */
 
 #include <stdio.h>
 #include <stdbool.h>
 #include "minimax.h"
 
-/* External globals (preserved for your project) */
+// ============================================================================
+// CONSTANTS AND STATIC VARIABLES
+// ============================================================================
+
+/* Player symbols (not used in bitboard version, kept for compatibility) */
 static char player = 'X';
 static char opponent = 'O';
 
-/* Precomputed winning bit masks */
+/**
+ * @brief Precomputed winning line bit masks
+ * 
+ * Each mask represents a winning line (row, column, or diagonal).
+ * A player wins if their bitmask contains all bits of any winning mask.
+ */
 static const int WIN_MASKS[8] = {
     (1 << 0) | (1 << 1) | (1 << 2), // row 0
     (1 << 3) | (1 << 4) | (1 << 5), // row 1
@@ -27,13 +43,31 @@ static const int WIN_MASKS[8] = {
     (1 << 1) | (1 << 4) | (1 << 7), // col 1
     (1 << 2) | (1 << 5) | (1 << 8), // col 2
     (1 << 0) | (1 << 4) | (1 << 8), // main diagonal
-    (1 << 2) | (1 << 4) | (1 << 6)  // anti-diagonal
+    (1 << 2) | (1 << 4) | (1 << 6)  // anti-diagonal (top-right to bottom-left)
 };
 
-/* Move order: center → corners → edges (optimizes alpha-beta pruning) */
+/**
+ * @brief Optimized move ordering for alpha-beta pruning
+ * 
+ * Center → corners → edges ordering helps alpha-beta pruning
+ * find cutoffs earlier, significantly reducing search time.
+ */
 static const int MOVE_ORDER[9] = {4, 0, 2, 6, 8, 1, 3, 5, 7};
 
-/* Convert 3×3 board to bit masks */
+// ============================================================================
+// BITBOARD UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * @brief Convert 3×3 board array to bitboard representation
+ * 
+ * Creates two 9-bit masks: one for X pieces, one for O pieces.
+ * Each bit position (0-8) corresponds to a board cell.
+ * 
+ * @param board 3x3 character array representing the board
+ * @param maskX Output parameter: bitmask for X pieces
+ * @param maskO Output parameter: bitmask for O pieces
+ */
 static inline void boardToMasks(const char board[3][3], int *maskX, int *maskO) {
     *maskX = 0;
     *maskO = 0;
@@ -46,7 +80,14 @@ static inline void boardToMasks(const char board[3][3], int *maskX, int *maskO) 
         }
 }
 
-/* Check if given bitmask represents a winning position */
+/**
+ * @brief Check if a bitmask contains a winning line
+ * 
+ * Tests if the given mask contains all bits of any winning line mask.
+ * 
+ * @param mask Bitmask to check (either X or O mask)
+ * @return true if mask contains a winning line, false otherwise
+ */
 static inline bool isWinnerMask(int mask) {
     for (int i = 0; i < 8; ++i)
         if ((mask & WIN_MASKS[i]) == WIN_MASKS[i])
@@ -54,46 +95,89 @@ static inline bool isWinnerMask(int mask) {
     return false;
 }
 
-/*
- * Internal minimax on bit masks with alpha-beta pruning
- * isMax = true → player's turn (maximizer)
- * Returns score in range roughly [−10, +10] adjusted by depth.
+// ============================================================================
+// MINIMAX ALGORITHM WITH ALPHA-BETA PRUNING
+// ============================================================================
+
+/**
+ * @brief Internal minimax algorithm using bitboard representation
+ * 
+ * Recursively evaluates all possible game states using minimax with
+ * alpha-beta pruning. Uses bitboard representation for efficiency.
+ * 
+ * @param playerMask Bitmask for the maximizing player (AI)
+ * @param oppMask Bitmask for the minimizing player (human)
+ * @param depth Current search depth (0 = root)
+ * @param alpha Best value for maximizer found so far
+ * @param beta Best value for minimizer found so far
+ * @param isMax true if it's the maximizer's turn, false otherwise
+ * @return Score: positive for AI win, negative for human win, 0 for draw
+ *         Score is adjusted by depth (prefer shorter wins)
  */
 static int minimax_masks(int playerMask, int oppMask, int depth,
                          int alpha, int beta, bool isMax)
 {
-    /* Terminal checks first */
-    if (isWinnerMask(playerMask)) return 10 - depth;
-    if (isWinnerMask(oppMask))    return -10 + depth;
-    if ((playerMask | oppMask) == 0x1FF || depth == 9) return 0; // draw or full board
+    // Terminal state checks
+    if (isWinnerMask(playerMask)) {
+        return 10 - depth;  // AI wins (prefer shorter wins)
+    }
+    if (isWinnerMask(oppMask)) {
+        return -10 + depth;  // Human wins (prefer longer losses)
+    }
+    // Draw: all 9 cells filled (0x1FF = 0b111111111)
+    if ((playerMask | oppMask) == 0x1FF || depth == 9) {
+        return 0;
+    }
 
+    // Initialize best score based on player role
     int best = isMax ? -1000 : 1000;
 
+    // Try moves in optimized order (center → corners → edges)
     for (int mi = 0; mi < 9; ++mi) {
         int pos = MOVE_ORDER[mi];
         int bit = (1 << pos);
-        if ((playerMask | oppMask) & bit) continue; // occupied
+        
+        // Skip occupied cells
+        if ((playerMask | oppMask) & bit) {
+            continue;
+        }
 
         if (isMax) {
+            // Maximizer's turn (AI)
             int newPlayer = playerMask | bit;
             int val = minimax_masks(newPlayer, oppMask, depth + 1, alpha, beta, false);
-            if (val > best) best = val;
+            if (val > best) {
+                best = val;
+            }
             alpha = (val > alpha) ? val : alpha;
-            if (alpha >= beta) break; // beta cutoff
+            if (alpha >= beta) {
+                break;  // Beta cutoff: human has a better option elsewhere
+            }
         } else {
+            // Minimizer's turn (human)
             int newOpp = oppMask | bit;
             int val = minimax_masks(playerMask, newOpp, depth + 1, alpha, beta, true);
-            if (val < best) best = val;
+            if (val < best) {
+                best = val;
+            }
             beta = (val < beta) ? val : beta;
-            if (alpha >= beta) break; // alpha cutoff
+            if (alpha >= beta) {
+                break;  // Alpha cutoff: AI has a better option elsewhere
+            }
         }
     }
 
     return best;
 }
 
-/*
- * Count the number of set bits in a mask (number of pieces)
+/**
+ * @brief Count the number of set bits in a bitmask
+ * 
+ * Used to determine which player's turn it is by comparing
+ * the number of pieces each player has placed.
+ * 
+ * @param mask Bitmask to count bits in
+ * @return Number of set bits (pieces on board)
  */
 static inline int countBits(int mask) {
     int count = 0;
@@ -104,25 +188,25 @@ static inline int countBits(int mask) {
     return count;
 }
 
-/*
- * findBestMove: returns the best move for the AI
- * using alpha-beta-optimized mask minimax.
- * aiSymbol: 'X' or 'O' - explicitly tells the function which symbol the AI is playing
- */
+// ============================================================================
+// PUBLIC API FUNCTION
+// ============================================================================
+
 struct Move findBestMovePerfect(char board[3][3], char aiSymbol) {
+    // Convert board to bitboard representation
     int maskX = 0, maskO = 0;
     boardToMasks(board, &maskX, &maskO);
     int occupied = maskX | maskO;
 
     // Determine which symbol the AI is playing
-    // If board is empty, use the provided aiSymbol
-    // Otherwise, determine from piece counts (the player with fewer pieces is the one whose turn it is)
+    // Strategy: If board is empty, use provided aiSymbol.
+    // Otherwise, determine from piece counts (player with fewer pieces goes next)
     int countX = countBits(maskX);
     int countO = countBits(maskO);
     
     int aiMask, oppMask;
     if (countX == 0 && countO == 0) {
-        // Empty board - use the provided aiSymbol to determine which mask to use
+        // Empty board - use the provided aiSymbol
         if (aiSymbol == 'X') {
             aiMask = maskX;
             oppMask = maskO;
@@ -134,27 +218,35 @@ struct Move findBestMovePerfect(char board[3][3], char aiSymbol) {
         // Board has moves - determine from piece counts
         // The player with fewer pieces (or equal) is the one whose turn it is
         if (countX <= countO) {
-            // X has fewer or equal pieces, so it's X's turn (AI is X)
+            // X has fewer or equal pieces, so it's X's turn
             aiMask = maskX;
             oppMask = maskO;
         } else {
-            // O has fewer pieces, so it's O's turn (AI is O)
+            // O has fewer pieces, so it's O's turn
             aiMask = maskO;
             oppMask = maskX;
         }
     }
 
+    // Search for best move using minimax
     int bestVal = -1000;
     struct Move bestMove = { -1, -1 };
 
+    // Try all possible moves in optimized order
     for (int mi = 0; mi < 9; ++mi) {
         int pos = MOVE_ORDER[mi];
         int bit = (1 << pos);
-        if (occupied & bit) continue;
+        
+        // Skip occupied cells
+        if (occupied & bit) {
+            continue;
+        }
 
+        // Evaluate this move
         int newAiMask = aiMask | bit;
         int moveVal = minimax_masks(newAiMask, oppMask, 1, -1000, 1000, false);
 
+        // Update best move if this is better
         if (moveVal > bestVal) {
             bestVal = moveVal;
             bestMove.row = pos / 3;

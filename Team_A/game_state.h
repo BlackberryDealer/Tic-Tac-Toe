@@ -1,25 +1,58 @@
+/**
+ * @file game_state.h
+ * @brief Game state management module for Tic-Tac-Toe
+ * 
+ * This module defines the core game state structure, including board state,
+ * player information, game settings, and theme management. It provides
+ * functions to initialize, reset, and manage the game state throughout
+ * the application lifecycle.
+ * 
+ * @author Team A
+ * @date 2025
+ */
+
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
 #include "raylib.h"
 #include <stdbool.h>
 
-// Screen dimensions for responsive design
+// ============================================================================
+// CONSTANTS AND MACROS
+// ============================================================================
+
+/** Screen dimensions for responsive design (dynamically retrieved) */
 #define SCREEN_WIDTH GetScreenWidth()
 #define SCREEN_HEIGHT GetScreenHeight()
 
-// --- NEW THEMES ---
-// Makes it easy to ask for a theme by name
+// ============================================================================
+// THEME SYSTEM
+// ============================================================================
+
+/**
+ * @enum ThemeID
+ * @brief Enumeration of available color themes for the game UI
+ * 
+ * Makes it easy to request a theme by name. Each theme provides a complete
+ * color palette for the game interface.
+ */
 typedef enum {
     THEME_DEFAULT,
     THEME_DARK,
     THEME_FOREST,
     THEME_SPACE,
     THEME_AQUATIC,
-    THEME_COUNT // This will automatically be 5
+    THEME_COUNT  /**< Total number of themes (automatically calculated) */
 } ThemeID;
 
-// Holds all the colors for a single theme
+/**
+ * @struct Theme
+ * @brief Complete color palette for a single UI theme
+ * 
+ * Holds all the colors needed to render the game interface with a
+ * consistent visual style. Each theme provides primary, secondary,
+ * accent, warning, background, dark, and light colors.
+ */
 typedef struct {
     const char* name;
     Color primary;
@@ -28,10 +61,20 @@ typedef struct {
     Color warning;
     Color background;
     Color dark;
-    Color light;
+    Color light;        /**< Light color for text/UI elements */
 } Theme;
 
-// Game states
+// ============================================================================
+// GAME STATE ENUMERATIONS
+// ============================================================================
+
+/**
+ * @enum GameScreen
+ * @brief Represents the current screen/menu state of the application
+ * 
+ * Used to manage navigation between different screens (start menu,
+ * game screen, settings, etc.)
+ */
 typedef enum {
     SCREEN_START,
     SCREEN_MODE_SELECT,
@@ -41,21 +84,56 @@ typedef enum {
     SCREEN_SYMBOL_SELECT_2P,
     SCREEN_INSTRUCTIONS,
     SCREEN_GAME,
-    SCREEN_GAME_OVER
+    SCREEN_GAME_OVER    /**< Game over screen with results */
 } GameScreen;
 
-// Game modes
+/**
+ * @enum GameMode
+ * @brief Defines the game play mode (single or two player)
+ */
 typedef enum {
     MODE_ONE_PLAYER,
-    MODE_TWO_PLAYER
+    MODE_TWO_PLAYER     /**< Two human players mode */
 } GameMode;
 
-// Difficulty levels (mapped to Team B's AI)
-#define DIFF_EASY 3      // Model-based (makes mistakes)
-#define DIFF_MEDIUM 2    // Imperfect
-#define DIFF_HARD 1      // Perfect
+// ============================================================================
+// DIFFICULTY CONSTANTS
+// ============================================================================
 
-// Global game state
+/**
+ * @def DIFF_EASY
+ * @brief Easy difficulty - uses model-based AI (makes mistakes)
+ */
+#define DIFF_EASY 3
+
+/**
+ * @def DIFF_MEDIUM
+ * @brief Medium difficulty - uses imperfect minimax AI
+ */
+#define DIFF_MEDIUM 2
+
+/**
+ * @def DIFF_HARD
+ * @brief Hard difficulty - uses perfect minimax AI (unbeatable)
+ */
+#define DIFF_HARD 1
+
+// ============================================================================
+// GAME STATE STRUCTURE
+// ============================================================================
+
+/**
+ * @struct GameState
+ * @brief Central game state structure containing all game information
+ * 
+ * This structure maintains the complete state of the game including:
+ * - Current screen and mode
+ * - Board state (3x3 grid)
+ * - Player symbols and turn information
+ * - Game status (winner, game over flag)
+ * - Statistics (wins, draws)
+ * - UI settings (theme, fullscreen)
+ */
 typedef struct {
     GameScreen screen;
     GameMode mode;
@@ -72,27 +150,83 @@ typedef struct {
     int player2Wins;
     int draws;
     bool isFullscreen;
-    ThemeID currentTheme; // Current theme ID
+    ThemeID currentTheme;  /**< Currently active theme ID */
 } GameState;
 
-// UI Colors (extern declarations)
-extern Color colorPrimary;
-extern Color colorSecondary;
-extern Color colorAccent;
-extern Color colorWarning;
-extern Color colorBackground;
-extern Color colorDark;
-extern Color colorLight;
+// ============================================================================
+// GLOBAL VARIABLES
+// ============================================================================
 
-// Global game state instance
+/** Global UI color variables (extern declarations) */
+extern Color colorPrimary;      /**< Primary UI color */
+extern Color colorSecondary;    /**< Secondary UI color */
+extern Color colorAccent;       /**< Accent/highlight color */
+extern Color colorWarning;      /**< Warning/alert color */
+extern Color colorBackground;   /**< Background color */
+extern Color colorDark;         /**< Dark text/grid color */
+extern Color colorLight;        /**< Light text color */
+
+/** Global game state instance */
 extern GameState game;
 
-// Game state functions
+// ============================================================================
+// FUNCTION DECLARATIONS
+// ============================================================================
+
+/**
+ * @brief Initialize the game state with default values
+ * 
+ * Sets up the game with default settings, initializes the board,
+ * and applies the default theme. Should be called once at program start.
+ */
 void InitGame(void);
+
+/**
+ * @brief Reset the game board to an empty state
+ * 
+ * Clears all cells on the board and resets game status flags.
+ * Does not reset statistics (wins, draws) or settings.
+ */
 void ResetBoard(void);
+
+/**
+ * @brief Check if there is a winner on the current board
+ * 
+ * Examines all rows, columns, and diagonals to determine if
+ * any player has achieved three in a row. Updates the winner
+ * field and statistics if a winner is found.
+ * 
+ * @return true if a winner is found, false otherwise
+ */
 bool CheckWinner(void);
+
+/**
+ * @brief Check if the board is completely filled
+ * 
+ * Determines if all 9 cells are occupied. If the board is full
+ * and no winner exists, increments the draw counter.
+ * 
+ * @return true if board is full, false otherwise
+ */
 bool IsBoardFull(void);
+
+/**
+ * @brief Execute the AI's move based on current difficulty
+ * 
+ * Selects the appropriate AI algorithm (perfect, imperfect, or model)
+ * based on the current difficulty setting and makes a move on the board.
+ * Updates the current player after the move.
+ */
 void MakeAIMove(void);
-void ChangeTheme(ThemeID newTheme); //new for themes
+
+/**
+ * @brief Change the active UI theme
+ * 
+ * Switches to the specified theme and updates all global color
+ * variables to match the new theme's palette.
+ * 
+ * @param newTheme The theme ID to switch to
+ */
+void ChangeTheme(ThemeID newTheme);
 
 #endif // GAME_STATE_H

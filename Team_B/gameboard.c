@@ -1,3 +1,14 @@
+/**
+ * @file gameboard.c
+ * @brief Game board display and status checking implementation
+ * 
+ * This file implements console-based board display and game status
+ * checking functions. Used by both console and GUI versions of the game.
+ * 
+ * @author Team B
+ * @date 2025
+ */
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,7 +16,10 @@
 #include "gameboard.h"
 #include "minimax.h"
 
-// Function to display the game board
+// ============================================================================
+// BOARD DISPLAY FUNCTIONS
+// ============================================================================
+
 void showBoard(char board[][SIDE])
 {
     printf("\n\n");
@@ -19,7 +33,6 @@ void showBoard(char board[][SIDE])
            board[2][1], board[2][2]);
 }
 
-// Function to show the instructions
 void showInstructions()
 {
     printf("\t\t\t Tic-Tac-Toe\n\n");
@@ -34,7 +47,10 @@ void showInstructions()
     printf("-\t-\t-\t-\t-\t-\t-\t-\t-\t\n\n");
 }
 
-// Function to initialise the game
+// ============================================================================
+// BOARD INITIALIZATION
+// ============================================================================
+
 void initialise(char board[][SIDE], int moves[])
 {
     srand((unsigned)time(NULL));
@@ -58,7 +74,10 @@ void initialise(char board[][SIDE], int moves[])
     }
 }
 
-// Function to check if any row is crossed with the same player's move
+// ============================================================================
+// WIN CONDITION CHECKING FUNCTIONS
+// ============================================================================
+
 int rowCrossed(char board[][SIDE])
 {
     for (int i = 0; i < SIDE; i++) {
@@ -70,7 +89,6 @@ int rowCrossed(char board[][SIDE])
     return 0;
 }
 
-// Function to check if any column is crossed with the same player's move
 int columnCrossed(char board[][SIDE])
 {
     for (int i = 0; i < SIDE; i++) {
@@ -82,7 +100,6 @@ int columnCrossed(char board[][SIDE])
     return 0;
 }
 
-// Function to check if any diagonal is crossed with the same player's move
 int diagonalCrossed(char board[][SIDE])
 {
     if ((board[0][0] == board[1][1]
@@ -96,7 +113,12 @@ int diagonalCrossed(char board[][SIDE])
     return 0;
 }
 
-/* helper: check if board is full (no spaces) */
+/**
+ * @brief Check if board is completely filled (no empty cells)
+ * 
+ * @param board 3x3 game board array
+ * @return true if board is full, false otherwise
+ */
 static bool isBoardFull(char board[][SIDE])
 {
     for (int r = 0; r < SIDE; r++) {
@@ -108,9 +130,6 @@ static bool isBoardFull(char board[][SIDE])
     return true;
 }
 
-/* return GAME_WIN if any win-line exists,
-   GAME_DRAW if board full with no winner,
-   GAME_ONGOING otherwise */
 GameStatus gameStatus(char board[][SIDE])
 {
     if (rowCrossed(board) || columnCrossed(board) || diagonalCrossed(board))

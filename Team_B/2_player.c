@@ -1,15 +1,27 @@
-/*
- * Two-player mode. Uses the shared showBoard and gameStatus helpers
- * so presentation and win detection stay consistent with single-player.
+/**
+ * @file 2_player.c
+ * @brief Two-player game mode implementation
+ * 
+ * This module implements the two-player game mode where two humans
+ * take turns playing against each other on the same device.
+ * Uses shared board display and status checking functions for consistency.
+ * 
+ * @author Team B
+ * @date 2025
  */
 
 #include <stdio.h>
 #include "2_player.h"
 #include "gameboard.h"
 
-/*
- * declareWinnerTwoPlayer
- * - Purpose: Print which player won the two-player match.
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * @brief Display winner announcement for two-player mode
+ * 
+ * @param playerNumber Player number (1 or 2) who won
  */
 void declareWinnerTwoPlayer(int playerNumber)
 {
@@ -21,20 +33,27 @@ void declareWinnerTwoPlayer(int playerNumber)
         printf("Player %d has won!!!\n", playerNumber);
 }
 
+// ============================================================================
+// MAIN GAME FUNCTION
+// ============================================================================
+
 void playTwoPlayer()
 {
+    // Initialize game board
     char board[SIDE][SIDE];
     int moves[SIDE * SIDE];
-
-    initialise(board, moves);   // prepare board (initialise should set empty cells)
-
-    int turn = 0;               // even -> Player 1 (HUMANMOVE / 'X'), odd -> Player 2 (COMPUTERMOVE / 'O')
-    int row, col;
-    int move;
-    int moveIndex = 0;          // defensive move counter
-
+    initialise(board, moves);
     showInstructions();
 
+    // Initialize game state
+    int turn = 0;        // Even = Player 1 (X), Odd = Player 2 (O)
+    int row, col;
+    int move;
+    int moveIndex = 0;   // Defensive move counter
+
+    // ========================================================================
+    // MAIN GAME LOOP
+    // ========================================================================
     while (1) {
         printf("Player %d, enter your move (1-%d): ", (turn % 2) + 1, SIDE * SIDE);
 

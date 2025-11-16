@@ -1,6 +1,13 @@
-/*
- * playOnePlayer: thin wrapper that uses the modular playTicTacToe
- * implementation (computer vs human) from game.c
+/**
+ * @file 1_player.c
+ * @brief Single-player game mode implementation
+ * 
+ * This module implements the one-player game mode where a human
+ * plays against an AI opponent. Supports multiple AI difficulty levels
+ * (Perfect, Imperfect, Model-based).
+ * 
+ * @author Team B
+ * @date 2025
  */
 
 #include <stdio.h>
@@ -9,9 +16,21 @@
 #include "gameboard.h"
 #include "minimax.h"
 
-#define EMPTY ' '   // single definition for an empty board cell
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
-// Declare winner depending on whoseTurn (COMPUTER or HUMAN)
+#define EMPTY ' '   /**< Character representing an empty board cell */
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * @brief Display winner announcement
+ * 
+ * @param whoseTurn COMPUTER (1) or HUMAN (2) - the winner
+ */
 void declareWinner(int whoseTurn)
 {
     if (whoseTurn == COMPUTER)
@@ -20,80 +39,106 @@ void declareWinner(int whoseTurn)
         printf("HUMAN has won!!!\n");
 }
 
+// ============================================================================
+// MAIN GAME FUNCTION
+// ============================================================================
+
 void playOnePlayer()
 {
-    // Game board and moves array
+    // Initialize game board and moves array
     char board[SIDE][SIDE];
     int moves[SIDE * SIDE];
-
-    // Initialize empty board and moves list
     initialise(board, moves);
     showInstructions();
 
-    // Ask user to choose AI difficulty
+    // Prompt user for AI difficulty selection
     int difficulty;
     while (1) {
         printf("Choose AI difficulty:\n");
         printf("1. Perfect (always optimal)\n");
         printf("2. Imperfect (can make mistakes)\n");
         printf("3. Model (trained ML, can make different mistakes)\n"); 
-    printf("\nEnter choice: ");
+        printf("\nEnter choice: ");
+        
         if (scanf("%d", &difficulty) != 1) {
             // Clear invalid input buffer
-            int c; while ((c = getchar()) != '\n' && c != EOF) {}
-            printf("Invalid input. Please enter 1 or 2.\n");
+            int c;
+            while ((c = getchar()) != '\n' && c != EOF) {}
+            printf("Invalid input. Please enter 1, 2, or 3.\n");
             continue;
         }
-        if (difficulty == 1 || difficulty == 2 || difficulty == 3) break;
-        printf("Invalid choice. Please enter 1,  2 or 3.\n");
+        if (difficulty == 1 || difficulty == 2 || difficulty == 3) {
+            break;
+        }
+        printf("Invalid choice. Please enter 1, 2, or 3.\n");
     }
 
-    // Track move index and whose turn it is
+    // Initialize game state
     int moveIndex = 0, x, y;
     int whoseTurn = COMPUTER;  // Computer always starts first
 
-    // Main game loop
+    // ========================================================================
+    // MAIN GAME LOOP
+    // ========================================================================
     while (1) {
         if (whoseTurn == COMPUTER) {
-            // Convert board to tempBoard for minimax functions
-            // Use SIDE so this code remains consistent if board size changes
+            // ================================================================
+            // COMPUTER'S TURN (AI MOVE)
+            // ================================================================
+            
+            // Convert board to format expected by minimax functions
+            // Use SIDE constant for consistency if board size changes
             char tempBoard[SIDE][SIDE];
             for (int i = 0; i < SIDE; i++) {
                 for (int j = 0; j < SIDE; j++) {
-                    if (board[i][j] == 'X') tempBoard[i][j] = 'X';
-                    else if (board[i][j] == 'O') tempBoard[i][j] = 'O';
-                    else tempBoard[i][j] = EMPTY; // empty cell
+                    if (board[i][j] == 'X') {
+                        tempBoard[i][j] = 'X';
+                    } else if (board[i][j] == 'O') {
+                        tempBoard[i][j] = 'O';
+                    } else {
+                        tempBoard[i][j] = EMPTY;
+                    }
                 }
             }
 
-            // Select move depending on difficulty chosen
+            // Select AI algorithm based on difficulty
             struct Move thisMove;
-            if (difficulty == 1)
-                thisMove = findBestMovePerfect(tempBoard, COMPUTERMOVE);   // Perfect AI (computer is 'O')
-            else if (difficulty == 2)
-                thisMove = findBestMoveImperfect(tempBoard); // Imperfect AI
-            else if (difficulty == 3)
+            if (difficulty == 1) {
+                // Perfect AI - unbeatable, uses alpha-beta pruning
+                thisMove = findBestMovePerfect(tempBoard, COMPUTERMOVE);
+            } else if (difficulty == 2) {
+                // Imperfect AI - makes mistakes, depth-limited
+                thisMove = findBestMoveImperfect(tempBoard);
+            } else if (difficulty == 3) {
+                // Model-based AI - uses logistic regression
                 thisMove = findBestMoveModel(tempBoard);
-            // Apply computer move to board
+            }
+            
+            // Extract move coordinates
             x = thisMove.row;
             y = thisMove.col;
 
-            // Defensive check: if minimax returned invalid move, pick first empty cell
+            // Defensive check: if AI returned invalid move, pick first empty cell
             if (x < 0 || x >= SIDE || y < 0 || y >= SIDE || board[x][y] != EMPTY) {
                 int found = 0;
                 for (int i = 0; i < SIDE && !found; i++) {
                     for (int j = 0; j < SIDE; j++) {
                         if (board[i][j] == EMPTY) {
-                            x = i; y = j; found = 1; break;
+                            x = i;
+                            y = j;
+                            found = 1;
+                            break;
                         }
                     }
                 }
-                if (!found) { // no empty cell, declare draw and return
+                if (!found) {
+                    // No empty cell - declare draw
                     printf("It's a DRAW\n");
                     return;
                 }
             }
 
+            // Apply computer move
             board[x][y] = COMPUTERMOVE;
             printf("COMPUTER has put a %c in cell %d %d\n", COMPUTERMOVE, x, y);
             showBoard(board);
@@ -111,7 +156,10 @@ void playOnePlayer()
 
             // Switch turn to human
             whoseTurn = HUMAN;
-        } else { // HUMAN turn
+        } else {
+            // ================================================================
+            // HUMAN'S TURN
+            // ================================================================
             int move;
             printf("Enter your move (1-9): ");
             if (scanf("%d", &move) != 1) {

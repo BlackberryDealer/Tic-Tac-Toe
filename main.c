@@ -1,21 +1,43 @@
+/**
+ * @file main.c
+ * @brief Main entry point for Tic-Tac-Toe game
+ * 
+ * This file contains the main game loop that handles window initialization,
+ * screen navigation, input processing, and rendering. Uses Raylib for
+ * graphics and window management.
+ * 
+ * @author Team A & Team B
+ * @date 2025
+ */
+
 #include "raylib.h"
 #include "Team_A/game_state.h"
 #include "Team_A/screens.h"
 
+/**
+ * @brief Main entry point
+ * 
+ * Initializes the game window, sets up the game state, and runs the
+ * main game loop until the window is closed.
+ * 
+ * @return 0 on successful exit
+ */
 int main(void)
 {
-    // Initialize window
+    // Initialize window with resizable flag
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(1280, 720, "Tic-Tac-Toe"); //changed window size to 1280x720
+    InitWindow(1280, 720, "Tic-Tac-Toe");
     SetTargetFPS(60);
     
-    // Initialize game state
+    // Initialize game state (board, settings, theme)
     InitGame();
     
-    // Main game loop
+    // ========================================================================
+    // MAIN GAME LOOP
+    // ========================================================================
     while (!WindowShouldClose())
     {
-        // Handle input based on current screen
+        // Process input based on current screen
         switch (game.screen)
         {
             case SCREEN_START:
@@ -47,11 +69,13 @@ int main(void)
                 break;
         }
         
-        // Draw
+        // ====================================================================
+        // RENDERING PHASE
+        // ====================================================================
         BeginDrawing();
         ClearBackground(colorBackground);
         
-        // Draw based on current screen
+        // Render appropriate screen based on current state
         switch (game.screen)
         {
             case SCREEN_START:
@@ -87,6 +111,7 @@ int main(void)
         EndDrawing();
     }
     
+    // Cleanup: close window and exit
     CloseWindow();
     return 0;
 }
