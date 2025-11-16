@@ -1,5 +1,6 @@
 #include "game_state.h"
 #include "../Team_B/minimax.h"
+#include <stdio.h> // --- New for file saving ---
 
 // --- NEW allThemes array ---
 
@@ -15,15 +16,15 @@ Theme allThemes[THEME_COUNT] = {
         .light = {255, 255, 255, 255}         // White
     },
     [THEME_DARK] = {
-        .name = "Dark",
-        .primary = {52, 152, 219, 255},      // Blue
-        .secondary = {46, 204, 113, 255},    // Green
-        .accent = {231, 76, 60, 255},         // Red
-        .warning = {241, 196, 15, 255},       // Yellow
-        .background = {30, 40, 50, 255},       // Very Dark Blue
-        .dark = {236, 240, 241, 255},     // Light Gray (Grid/Text)
-        .light = {255, 255, 255, 255}         // White
-    },
+    .name = "Dark",
+    .primary = {52, 152, 219, 255},      // Blue
+    .secondary = {46, 204, 113, 255},    // Green
+    .accent = {231, 76, 60, 255},         // Red
+    .warning = {241, 196, 15, 255},       // Yellow
+    .background = {30, 40, 50, 255},       // Very Dark Blue (Page BG)
+    .dark = {44, 62, 80, 255},           // Dark Blue-Gray (Text on light boxes)
+    .light = {236, 240, 241, 255}         // Light Gray (Text on dark BG)
+},
     [THEME_FOREST] = {
         .name = "Forest",
         .primary = {46, 139, 87, 255},        // Sea Green
@@ -40,9 +41,9 @@ Theme allThemes[THEME_COUNT] = {
         .secondary = {52, 73, 94, 255},       // Grayish Blue
         .accent = {241, 196, 15, 255},        // Yellow (Star)
         .warning = {231, 76, 60, 255},        // Red (Nebula)
-        .background = {20, 25, 40, 255},       // Near Black
-        .dark = {220, 220, 255, 255},     // Light Blue-White (Grid/Text)
-        .light = {255, 255, 255, 255}         // White
+        .background = {20, 25, 40, 255},       // Near Black (Page BG)
+        .dark = {44, 62, 80, 255},           // Dark Blue-Gray (Text on light boxes)
+        .light = {220, 220, 255, 255}         // Light Blue-White (Text on dark BG)
     },
     [THEME_AQUATIC] = {
         .name = "Aquatic",
@@ -84,6 +85,8 @@ void InitGame(void)
     game.player2Wins = 0;
     game.draws = 0;
     game.isFullscreen = false;
+    game.saveMessageTimer = 0.0f; // --- ADD THIS ---
+    game.saveMessage[0] = '\0';   // --- ADD THIS ---
     ChangeTheme(THEME_DEFAULT);
     ResetBoard();
 }
@@ -99,6 +102,7 @@ void ResetBoard(void)
     game.winner = ' ';
     game.aiTurn = (game.mode == MODE_ONE_PLAYER && game.humanSymbol == 'O');
     game.aiMoveTimer = 0.5f;
+    game.saveMessageTimer = 0.0f; // --- ADD THIS ---
 }
 
 // Check for winner on the board
@@ -235,4 +239,61 @@ void ChangeTheme(ThemeID newTheme)
     colorBackground = allThemes[newTheme].background;
     colorDark = allThemes[newTheme].dark;
     colorLight = allThemes[newTheme].light;
+}
+
+// --- NEW FUNCTION FOR FILE SAVING ---
+void SaveGame(void)
+{
+    FILE* file = fopen("save.dat", "wb");
+    if (file == NULL) {
+        sprintf(game.saveMessage, "ERROR: Save Failed!");
+        game.saveMessageTimer = 2.0f; // Show message for 2 seconds
+        return;
+    }
+
+    size_t itemsWritten = fwrite(&game, sizeof(GameState), 1, file);
+    fclose(file);
+
+    if (itemsWritten != 1) {
+        sprintf(game.saveMessage, "ERROR: Write Failed!");
+    } else {
+        sprintf(game.saveMessage, "Game Saved!");
+    }
+    game.saveMessageTimer = 2.0f; // Show message for 2 seconds
+}
+
+// --- ADD THIS ENTIRE FUNCTION ---
+// In Team_A/game_state.c
+
+bool LoadGame(void)
+{
+    // 1. Remember the user's currently active theme
+    ThemeID currentThemeBeforeLoad = game.currentTheme;
+
+    FILE* file = fopen("save.dat", "rb");
+    if (file == NULL) {
+        return false; // No file
+    }
+
+    // 2. Read into a temporary variable, NOT the real 'game'
+    GameState tempGame;
+    size_t itemsRead = fread(&tempGame, sizeof(GameState), 1, file);
+    fclose(file);
+
+    if (itemsRead != 1) {
+        // 3. The file was empty or corrupted. Abort.
+        // This is what stops the crash.
+        return false;
+    }
+
+    // 4. Success! Now we can safely update the real 'game'
+    game = tempGame;
+    
+    // 5. Restore the user's active theme (as you wanted)
+    game.currentTheme = currentThemeBeforeLoad;
+    
+    // 6. Re-apply the colors for the active theme
+    ChangeTheme(game.currentTheme);
+    
+    return true;
 }

@@ -3,6 +3,7 @@
 #include "game_state.h"
 #include "ui.h"
 #include "../Team_B/minimax.h"
+#include <string.h>
 
 void DrawStartScreen(void)
 {
@@ -13,14 +14,16 @@ void DrawStartScreen(void)
     
     const char* subtitle = "Classic Strategy Game";
     int subtitleWidth = MeasureText(subtitle, 25);
-    DrawText(subtitle, SCREEN_WIDTH/2 - subtitleWidth/2, 190, 25, colorDark);
+    DrawText(subtitle, SCREEN_WIDTH/2 - subtitleWidth/2, 190, 25, colorLight);
     
 // Main buttons
-Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 280, 250, 70);
-Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 370, 250, 70);
-Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 460, 250, 60);
+Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 260, 250, 70);
+Rectangle loadButton = CreateButton(SCREEN_WIDTH/2, 350, 250, 70); // --- NEW LOAD BUTTON ---
+Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 440, 250, 70);
+Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 530, 250, 60);
 
 DrawButton(playButton, "PLAY", colorSecondary);
+DrawButton(loadButton, "LOAD GAME", colorAccent); // --- NEW LOAD BUTTON ---
 DrawButton(instructionsButton, "INSTRUCTIONS", colorPrimary);
 
 // A New Theme button (bottom-right corner)
@@ -34,9 +37,10 @@ DrawButton(themesButton, "THEMES", colorDark);
 void HandleStartScreen(void)
 {
  // Main buttons
-Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 280, 250, 70);
-Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 370, 250, 70);
-Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 460, 250, 60);
+Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 260, 250, 70);
+Rectangle loadButton = CreateButton(SCREEN_WIDTH/2, 350, 250, 70); // --- NEW LOAD BUTTON ---
+Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 440, 250, 70);
+Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 530, 250, 60);
 
 // A New Theme button (bottom-right corner)
 Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
@@ -44,8 +48,16 @@ Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160
 if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
 {
     if (IsButtonHovered(playButton))
-        game.screen = SCREEN_MODE_SELECT;
-    else if (IsButtonHovered(themesButton)) // --- ADD THIS BLOCK ---
+    game.screen = SCREEN_MODE_SELECT;
+else if (IsButtonHovered(loadButton)) // --- LOAD BLOCK ---
+{
+    if (LoadGame())
+    {
+        game.screen = SCREEN_GAME; // Jump right into the loaded game
+    }
+    // else: no save file, so do nothing.
+}
+else if (IsButtonHovered(themesButton)) // --- THEME BLOCK ---
         game.screen = SCREEN_THEME_SELECT;
     else if (IsButtonHovered(instructionsButton))
             game.screen = SCREEN_INSTRUCTIONS;
@@ -70,7 +82,7 @@ if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
                 int monitor = GetCurrentMonitor();
                 int monitorWidth = GetMonitorWidth(monitor);
                 int monitorHeight = GetMonitorHeight(monitor);
-                SetWindowPosition((monitorWidth - 1280) / 2, (monitorHeight - 800) / 2);
+                SetWindowPosition((monitorWidth - 1280) / 2, (monitorHeight - 720) / 2);
             }
         }
     }
@@ -228,8 +240,16 @@ void DrawInstructionsScreen(void)
     int titleWidth = MeasureText(title, 60);
     DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 50, 60, colorPrimary);
     
-    DrawRectangleRec((Rectangle){100, 130, 600, 380}, colorLight);
-    DrawRectangleLinesEx((Rectangle){100, 130, 600, 380}, 3, colorPrimary);
+    // --- NEW: Calculate centered positions ---
+    float boxWidth = 600;
+    float boxHeight = 380;
+    float boxX = (SCREEN_WIDTH / 2) - (boxWidth / 2);
+    float boxY = 130;
+    float textX = boxX + 20;
+    // --- END NEW ---
+
+    DrawRectangleRec((Rectangle){boxX, boxY, boxWidth, boxHeight}, colorLight);
+    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, 3, colorPrimary);
     
     const char* instructions[] = {
         "HOW TO PLAY:",
@@ -247,10 +267,10 @@ void DrawInstructionsScreen(void)
         "Click on an empty square to place your symbol!"
     };
     
-    int yPos = 150;
+   int yPos = boxY + 20; // Use boxY for relative positioning
     for (int i = 0; i < 13; i++)
     {
-        DrawText(instructions[i], 120, yPos, 22, colorDark);
+        DrawText(instructions[i], textX, yPos, 22, colorDark); // Use textX
         yPos += 28;
     }
     
@@ -286,7 +306,7 @@ void DrawGameScreen(void)
                 game.player1Wins, game.player2Wins, game.draws);
     
     int scoreWidth = MeasureText(scoreText, 22);
-    DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, 80, 22, colorDark);
+    DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, 80, 22, colorLight);
     
     if (!game.gameOver)
     {
@@ -355,18 +375,32 @@ void DrawGameScreen(void)
             }
         }
     }
-    
+    // --- Save Feature ---
+if (game.saveMessageTimer > 0)
+{
+    int textWidth = MeasureText(game.saveMessage, 20);
+    Color msgColor = (strncmp(game.saveMessage, "ERROR", 5) == 0) ? colorAccent : colorSecondary;
+    DrawText(game.saveMessage, SCREEN_WIDTH / 2 - textWidth / 2, 555, 20, msgColor);
+}
     // Draw RESTART button
-Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 100, 595, 180, 50);
+Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
 DrawButton(restartButton, "RESTART", colorWarning);
 
-// Draw MENU button (moved to the right)
-Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 100, 595, 180, 50);
+Rectangle saveButton = CreateButton(SCREEN_WIDTH/2, 595, 140, 50); // --- ADD ---
+DrawButton(saveButton, "SAVE", colorSecondary); // --- ADD ---
+
+Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 170, 595, 140, 50);
 DrawButton(menuButton, "MENU", colorDark);
 }
 
 void HandleGameScreen(void)
 {
+    // --- ADD THIS BLOCK ---
+    if (game.saveMessageTimer > 0)
+    {
+        game.saveMessageTimer -= GetFrameTime();
+    }
+    // --- END ADD ---
     if (game.gameOver)
         return;
     
@@ -389,6 +423,7 @@ void HandleGameScreen(void)
     
     // Define rectangles for both buttons
 Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 100, 595, 180, 50);
+Rectangle saveButton = CreateButton(SCREEN_WIDTH/2, 595, 140, 50); // --- NEW SAVE BUTTON ---
 Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 100, 595, 180, 50);
 
 if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
@@ -397,6 +432,11 @@ if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         ResetBoard(); // Just reset the board, keep settings
         return;
+    }
+    else if (IsButtonHovered(saveButton)) // --- NEW SAVE ---
+    {
+        SaveGame();
+        return; // Game is saved, wait for next input
     }
     else if (IsButtonHovered(menuButton))
     {

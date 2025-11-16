@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 #include <stdbool.h>
+#include <stdio.h> // --- NEW for file saving --
 
 // Screen dimensions for responsive design
 #define SCREEN_WIDTH GetScreenWidth()
@@ -73,6 +74,10 @@ typedef struct {
     int draws;
     bool isFullscreen;
     ThemeID currentTheme; // Current theme ID
+    // --- ADD THESE ---
+    char saveMessage[64];
+    float saveMessageTimer;
+    // --- END ADD ---
 } GameState;
 
 // UI Colors (extern declarations)
@@ -94,5 +99,10 @@ bool CheckWinner(void);
 bool IsBoardFull(void);
 void MakeAIMove(void);
 void ChangeTheme(ThemeID newTheme); //new for themes
+
+// --- New for file saving ---
+void SaveGame(void);
+bool LoadGame(void);
+// --- END ADD ---
 
 #endif // GAME_STATE_H
