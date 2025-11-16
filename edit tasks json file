@@ -7,7 +7,11 @@ replace your args:[] key in tasks.json file with:
                 "${fileDirname}\\Team_B\\2_player.c",
                 "${fileDirname}\\Team_B\\gameboard.c",
                 "${fileDirname}\\Team_B\\PERFECT_minimax.c",
-                "${fileDirname}\\Team_B\\IMPERFECT_minimax.c"
+                "${fileDirname}\\Team_B\\IMPERFECT_minimax.c",
+                "${fileDirname}\\Team_B\\model_minimax.c",
+                "${fileDirname}\\Team_A\\game_state.c",
+                "${fileDirname}\\Team_A\\screens.c",
+                "${fileDirname}\\Team_A\\ui.c",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ]
