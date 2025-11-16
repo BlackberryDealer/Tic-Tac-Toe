@@ -15,12 +15,17 @@ void DrawStartScreen(void)
     int subtitleWidth = MeasureText(subtitle, 25);
     DrawText(subtitle, SCREEN_WIDTH/2 - subtitleWidth/2, 190, 25, colorDark);
     
-    Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 280, 250, 70);
-    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 370, 250, 70);
-    Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 460, 250, 60);
-    
-    DrawButton(playButton, "PLAY", colorSecondary);
-    DrawButton(instructionsButton, "INSTRUCTIONS", colorPrimary);
+// Main buttons
+Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 280, 250, 70);
+Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 370, 250, 70);
+Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 460, 250, 60);
+
+DrawButton(playButton, "PLAY", colorSecondary);
+DrawButton(instructionsButton, "INSTRUCTIONS", colorPrimary);
+
+// A New Theme button (bottom-right corner)
+Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
+DrawButton(themesButton, "THEMES", colorDark);
 
     const char* fullscreenText = game.isFullscreen ? "WINDOWED MODE" : "FULLSCREEN";
     DrawButton(fullscreenButton, fullscreenText, colorWarning);
@@ -28,15 +33,21 @@ void DrawStartScreen(void)
 
 void HandleStartScreen(void)
 {
-    Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 280, 250, 70);
-    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 370, 250, 70);
-    Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 460, 250, 60);
-    
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        if (IsButtonHovered(playButton))
-            game.screen = SCREEN_MODE_SELECT;
-        else if (IsButtonHovered(instructionsButton))
+ // Main buttons
+Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 280, 250, 70);
+Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 370, 250, 70);
+Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 460, 250, 60);
+
+// A New Theme button (bottom-right corner)
+Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
+
+if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+{
+    if (IsButtonHovered(playButton))
+        game.screen = SCREEN_MODE_SELECT;
+    else if (IsButtonHovered(themesButton)) // --- ADD THIS BLOCK ---
+        game.screen = SCREEN_THEME_SELECT;
+    else if (IsButtonHovered(instructionsButton))
             game.screen = SCREEN_INSTRUCTIONS;
         else if (IsButtonHovered(fullscreenButton))
         {
@@ -54,12 +65,12 @@ void HandleStartScreen(void)
             {
                 // Return to windowed mode
                 ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
-                SetWindowSize(800, 600);
+                SetWindowSize(1280, 720);
                 // Center the window
                 int monitor = GetCurrentMonitor();
                 int monitorWidth = GetMonitorWidth(monitor);
                 int monitorHeight = GetMonitorHeight(monitor);
-                SetWindowPosition((monitorWidth - 800) / 2, (monitorHeight - 600) / 2);
+                SetWindowPosition((monitorWidth - 1280) / 2, (monitorHeight - 800) / 2);
             }
         }
     }
@@ -345,8 +356,13 @@ void DrawGameScreen(void)
         }
     }
     
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2, 565, 180, 50);
-    DrawButton(menuButton, "MENU", colorDark);
+    // Draw RESTART button
+Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 100, 595, 180, 50);
+DrawButton(restartButton, "RESTART", colorWarning);
+
+// Draw MENU button (moved to the right)
+Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 100, 595, 180, 50);
+DrawButton(menuButton, "MENU", colorDark);
 }
 
 void HandleGameScreen(void)
@@ -371,15 +387,22 @@ void HandleGameScreen(void)
         return;
     }
     
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2, 565, 180, 50);
-    
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    // Define rectangles for both buttons
+Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 100, 595, 180, 50);
+Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 100, 595, 180, 50);
+
+if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+{
+    if (IsButtonHovered(restartButton))
     {
-        if (IsButtonHovered(menuButton))
-        {
-            game.screen = SCREEN_START;
-            return;
-        }
+        ResetBoard(); // Just reset the board, keep settings
+        return;
+    }
+    else if (IsButtonHovered(menuButton))
+    {
+        game.screen = SCREEN_START; // Go to menu, reset scores (in HandleGameOverScreen)
+        return;
+    }
         
         float boardSize = 360;
         float boardX = SCREEN_WIDTH/2 - boardSize/2;
@@ -513,6 +536,75 @@ void HandleGameOverScreen(void)
             game.player1Wins = 0;
             game.player2Wins = 0;
             game.draws = 0;
+        }
+    }
+}
+// --- NEW FUNCTION FOR THEMES ---
+void DrawThemeSelectScreen(void)
+{
+    const char* title = "SELECT THEME";
+    int titleWidth = MeasureText(title, 60);
+    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 60, 60, colorPrimary);
+
+    // Define buttons
+    Rectangle defaultButton = CreateButton(SCREEN_WIDTH/2, 150, 280, 60);
+    Rectangle darkButton = CreateButton(SCREEN_WIDTH/2, 220, 280, 60);
+    Rectangle forestButton = CreateButton(SCREEN_WIDTH/2, 290, 280, 60);
+    Rectangle spaceButton = CreateButton(SCREEN_WIDTH/2, 360, 280, 60);
+    Rectangle aquaticButton = CreateButton(SCREEN_WIDTH/2, 430, 280, 60);
+    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 520, 200, 60);
+
+    // Draw buttons
+    DrawButton(defaultButton, "DEFAULT", colorSecondary);
+    DrawButton(darkButton, "DARK", colorSecondary);
+    DrawButton(forestButton, "FOREST", colorSecondary);
+    DrawButton(spaceButton, "SPACE", colorSecondary);
+    DrawButton(aquaticButton, "AQUATIC", colorSecondary);
+    DrawButton(backButton, "BACK", colorDark);
+
+    // Add a highlight to the current theme
+    if (game.currentTheme == THEME_DEFAULT) DrawRectangleLinesEx(defaultButton, 5, colorAccent);
+    if (game.currentTheme == THEME_DARK) DrawRectangleLinesEx(darkButton, 5, colorAccent);
+    if (game.currentTheme == THEME_FOREST) DrawRectangleLinesEx(forestButton, 5, colorAccent);
+    if (game.currentTheme == THEME_SPACE) DrawRectangleLinesEx(spaceButton, 5, colorAccent);
+    if (game.currentTheme == THEME_AQUATIC) DrawRectangleLinesEx(aquaticButton, 5, colorAccent);
+}
+
+// --- ADD THIS ENTIRE FUNCTION ---
+void HandleThemeSelectScreen(void)
+{
+    Rectangle defaultButton = CreateButton(SCREEN_WIDTH/2, 150, 280, 60);
+    Rectangle darkButton = CreateButton(SCREEN_WIDTH/2, 220, 280, 60);
+    Rectangle forestButton = CreateButton(SCREEN_WIDTH/2, 290, 280, 60);
+    Rectangle spaceButton = CreateButton(SCREEN_WIDTH/2, 360, 280, 60);
+    Rectangle aquaticButton = CreateButton(SCREEN_WIDTH/2, 430, 280, 60);
+    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 520, 200, 60);
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        if (IsButtonHovered(defaultButton))
+        {
+            ChangeTheme(THEME_DEFAULT);
+        }
+        else if (IsButtonHovered(darkButton))
+        {
+            ChangeTheme(THEME_DARK);
+        }
+        else if (IsButtonHovered(forestButton))
+        {
+            ChangeTheme(THEME_FOREST);
+        }
+        else if (IsButtonHovered(spaceButton))
+        {
+            ChangeTheme(THEME_SPACE);
+        }
+        else if (IsButtonHovered(aquaticButton))
+        {
+            ChangeTheme(THEME_AQUATIC);
+        }
+        else if (IsButtonHovered(backButton))
+        {
+            game.screen = SCREEN_START;
         }
     }
 }

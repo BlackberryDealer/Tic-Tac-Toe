@@ -8,10 +8,34 @@
 #define SCREEN_WIDTH GetScreenWidth()
 #define SCREEN_HEIGHT GetScreenHeight()
 
+// --- NEW THEMES ---
+// Makes it easy to ask for a theme by name
+typedef enum {
+    THEME_DEFAULT,
+    THEME_DARK,
+    THEME_FOREST,
+    THEME_SPACE,
+    THEME_AQUATIC,
+    THEME_COUNT // This will automatically be 5
+} ThemeID;
+
+// Holds all the colors for a single theme
+typedef struct {
+    const char* name;
+    Color primary;
+    Color secondary;
+    Color accent;
+    Color warning;
+    Color background;
+    Color dark;
+    Color light;
+} Theme;
+
 // Game states
 typedef enum {
     SCREEN_START,
     SCREEN_MODE_SELECT,
+    SCREEN_THEME_SELECT,
     SCREEN_DIFFICULTY_SELECT,
     SCREEN_SYMBOL_SELECT_1P,
     SCREEN_SYMBOL_SELECT_2P,
@@ -48,6 +72,7 @@ typedef struct {
     int player2Wins;
     int draws;
     bool isFullscreen;
+    ThemeID currentTheme; // Current theme ID
 } GameState;
 
 // UI Colors (extern declarations)
@@ -68,5 +93,6 @@ void ResetBoard(void);
 bool CheckWinner(void);
 bool IsBoardFull(void);
 void MakeAIMove(void);
+void ChangeTheme(ThemeID newTheme); //new for themes
 
 #endif // GAME_STATE_H

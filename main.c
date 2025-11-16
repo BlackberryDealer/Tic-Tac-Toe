@@ -6,7 +6,7 @@ int main(void)
 {
     // Initialize window
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(800, 600, "Tic-Tac-Toe");
+    InitWindow(1280, 720, "Tic-Tac-Toe"); //changed window size to 1280x720
     SetTargetFPS(60);
     
     // Initialize game state
@@ -24,6 +24,9 @@ int main(void)
             case SCREEN_MODE_SELECT:
                 HandleModeSelectScreen();
                 break;
+            case SCREEN_THEME_SELECT:        //new case for theme select screen
+                HandleThemeSelectScreen();
+                break;    
             case SCREEN_DIFFICULTY_SELECT:
                 HandleDifficultySelectScreen();
                 break;
@@ -56,6 +59,9 @@ int main(void)
                 break;
             case SCREEN_MODE_SELECT:
                 DrawModeSelectScreen();
+                break;
+            case SCREEN_THEME_SELECT:  //new case for theme select screen
+                DrawThemeSelectScreen();
                 break;
             case SCREEN_DIFFICULTY_SELECT:
                 DrawDifficultySelectScreen();

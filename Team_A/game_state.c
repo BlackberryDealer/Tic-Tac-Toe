@@ -1,14 +1,69 @@
 #include "game_state.h"
 #include "../Team_B/minimax.h"
 
+// --- NEW allThemes array ---
+
+Theme allThemes[THEME_COUNT] = {
+    [THEME_DEFAULT] = {
+        .name = "Default",
+        .primary = {52, 152, 219, 255},      // Blue
+        .secondary = {46, 204, 113, 255},    // Green
+        .accent = {231, 76, 60, 255},         // Red
+        .warning = {241, 196, 15, 255},       // Yellow
+        .background = {236, 240, 241, 255},  // Light Gray
+        .dark = {44, 62, 80, 255},           // Dark Blue-Gray (Grid/Text)
+        .light = {255, 255, 255, 255}         // White
+    },
+    [THEME_DARK] = {
+        .name = "Dark",
+        .primary = {52, 152, 219, 255},      // Blue
+        .secondary = {46, 204, 113, 255},    // Green
+        .accent = {231, 76, 60, 255},         // Red
+        .warning = {241, 196, 15, 255},       // Yellow
+        .background = {30, 40, 50, 255},       // Very Dark Blue
+        .dark = {236, 240, 241, 255},     // Light Gray (Grid/Text)
+        .light = {255, 255, 255, 255}         // White
+    },
+    [THEME_FOREST] = {
+        .name = "Forest",
+        .primary = {46, 139, 87, 255},        // Sea Green
+        .secondary = {85, 107, 47, 255},     // Dark Olive
+        .accent = {139, 69, 19, 255},         // Brown (Saddle)
+        .warning = {218, 165, 32, 255},       // Goldenrod
+        .background = {240, 248, 240, 255},  // Pale Honeydew
+        .dark = {34, 54, 34, 255},           // Dark Forest Green (Grid/Text)
+        .light = {255, 255, 255, 255}         // White
+    },
+    [THEME_SPACE] = {
+        .name = "Space",
+        .primary = {142, 68, 173, 255},      // Purple
+        .secondary = {52, 73, 94, 255},       // Grayish Blue
+        .accent = {241, 196, 15, 255},        // Yellow (Star)
+        .warning = {231, 76, 60, 255},        // Red (Nebula)
+        .background = {20, 25, 40, 255},       // Near Black
+        .dark = {220, 220, 255, 255},     // Light Blue-White (Grid/Text)
+        .light = {255, 255, 255, 255}         // White
+    },
+    [THEME_AQUATIC] = {
+        .name = "Aquatic",
+        .primary = {26, 188, 156, 255},      // Turquoise
+        .secondary = {52, 152, 219, 255},    // Blue
+        .accent = {243, 156, 18, 255},       // Orange (Clownfish)
+        .warning = {241, 196, 15, 255},       // Yellow (Sand)
+        .background = {235, 250, 255, 255},  // Very Light Cyan
+        .dark = {0, 80, 100, 255},           // Deep Teal (Grid/Text)
+        .light = {255, 255, 255, 255}         // White
+    }
+};
+
 // UI Colors definitions
-Color colorPrimary = {52, 152, 219, 255};
-Color colorSecondary = {46, 204, 113, 255};
-Color colorAccent = {231, 76, 60, 255};
-Color colorWarning = {241, 196, 15, 255};
-Color colorBackground = {236, 240, 241, 255};
-Color colorDark = {44, 62, 80, 255};
-Color colorLight = {255, 255, 255, 255};
+Color colorPrimary = {0};
+Color colorSecondary = {0};
+Color colorAccent = {0};
+Color colorWarning = {0};
+Color colorBackground = {0};
+Color colorDark = {0};
+Color colorLight = {0};
 
 // Global game state definition
 GameState game = {0};
@@ -29,6 +84,7 @@ void InitGame(void)
     game.player2Wins = 0;
     game.draws = 0;
     game.isFullscreen = false;
+    ChangeTheme(THEME_DEFAULT);
     ResetBoard();
 }
 
@@ -38,7 +94,7 @@ void ResetBoard(void)
         for (int j = 0; j < 3; j++)
             game.board[i][j] = ' ';
     
-    game.currentPlayer = 'X';
+    game.currentPlayer = game.humanSymbol;
     game.gameOver = false;
     game.winner = ' ';
     game.aiTurn = (game.mode == MODE_ONE_PLAYER && game.humanSymbol == 'O');
@@ -162,4 +218,21 @@ void MakeAIMove(void)
         game.board[bestMove.row][bestMove.col] = game.aiSymbol;
         game.currentPlayer = game.humanSymbol;
     }
+}
+// --- ADD THIS ENTIRE FUNCTION ---
+void ChangeTheme(ThemeID newTheme)
+{
+    if (newTheme >= THEME_COUNT) newTheme = THEME_DEFAULT;
+
+    game.currentTheme = newTheme;
+
+    // Copy the theme's colors into the global variables
+    // that all your draw functions already use.
+    colorPrimary = allThemes[newTheme].primary;
+    colorSecondary = allThemes[newTheme].secondary;
+    colorAccent = allThemes[newTheme].accent;
+    colorWarning = allThemes[newTheme].warning;
+    colorBackground = allThemes[newTheme].background;
+    colorDark = allThemes[newTheme].dark;
+    colorLight = allThemes[newTheme].light;
 }

@@ -6,6 +6,7 @@
 // Screen drawing functions
 void DrawStartScreen(void);
 void DrawModeSelectScreen(void);
+void DrawThemeSelectScreen(void); //new function for theme select screen
 void DrawDifficultySelectScreen(void);
 void DrawSymbolSelectScreen(bool isPlayer1);
 void DrawInstructionsScreen(void);
@@ -15,6 +16,7 @@ void DrawGameOverScreen(void);
 // Screen input handling functions
 void HandleStartScreen(void);
 void HandleModeSelectScreen(void);
+void HandleThemeSelectScreen(void);  //new function for theme select screen
 void HandleDifficultySelectScreen(void);
 void HandleSymbolSelectScreen(bool isPlayer1);
 void HandleInstructionsScreen(void);
