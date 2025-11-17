@@ -58,6 +58,16 @@ void DrawGameScreen(void);
  */
 void DrawGameOverScreen(void);
 
+/**
+ * @brief Render the game over overlay with results
+ */
+void DrawGameOverScreen(void);
+
+/**
+ * @brief Render the game history screen
+ */
+void DrawHistoryScreen(void);
+
 // ============================================================================
 // SCREEN INPUT HANDLING FUNCTIONS (The "Controller")
 // ============================================================================
@@ -103,5 +113,15 @@ void HandleGameScreen(void);
  * @brief Process input for the game over screen
  */
 void HandleGameOverScreen(void);
+
+/**
+ * @brief Process input for the game over screen
+ */
+void HandleGameOverScreen(void);
+
+/**
+ * @brief Process input for the game history screen
+ */
+void HandleHistoryScreen(void);
 
 #endif // SCREENS_H

@@ -130,6 +130,8 @@ void InitGame(void)
     game.isFullscreen = false;
     game.saveMessageTimer = 0.0f; // Timer starts at 0 (hidden)
     game.saveMessage[0] = '\0';   // Clear save message buffer
+    game.moveCount = 0;           // Initialize move history counter
+    game.historyLineCount = 0;    // Initialize history line count
     ChangeTheme(THEME_DEFAULT);   // Apply the default theme
     
     // Initialize board
@@ -160,6 +162,7 @@ void ResetBoard(void)
     game.aiTurn = (game.mode == MODE_ONE_PLAYER && game.humanSymbol == 'O');
     game.aiMoveTimer = 0.5f;  // Delay before AI makes its first move
     game.saveMessageTimer = 0.0f; // Hide any save messages
+    game.moveCount = 0;           // Reset move history for new game
 }
 
 // ============================================================================
@@ -417,4 +420,93 @@ bool LoadGame(void)
     ChangeTheme(game.currentTheme);
     
     return true;
+}
+
+/**
+ * @brief Appends the result of the completed game to "game_history.txt".
+ * * This function is called once when a game ends.
+ */
+void AppendGameToHistory(void)
+{
+    // "a" mode = append (or create if it doesn't exist)
+    FILE* file = fopen("game_history.txt", "a");
+    if (file == NULL) {
+        return; // Failed to open file, do nothing
+    }
+
+    char summary[128];
+
+    if (game.mode == MODE_ONE_PLAYER)
+    {
+        // Get difficulty as a string
+        const char* diff = "Unknown";
+        if (game.difficulty == DIFF_HARD) diff = "Hard";
+        if (game.difficulty == DIFF_MEDIUM) diff = "Medium";
+        if (game.difficulty == DIFF_EASY) diff = "Easy";
+
+        // Format the summary string
+        if (game.winner == ' ') {
+            sprintf(summary, "1P vs AI (%s): Draw", diff);
+        } else if (game.winner == game.humanSymbol) {
+            sprintf(summary, "1P vs AI (%s): You Win", diff);
+        } else {
+            sprintf(summary, "1P vs AI (%s): AI Wins", diff);
+        }
+    }
+    else // MODE_TWO_PLAYER
+    {
+        if (game.winner == ' ') {
+            sprintf(summary, "2P (Human vs Human): Draw");
+        } else if (game.winner == 'X') {
+            sprintf(summary, "2P (Human vs Human): Player 1 (X) Wins");
+        } else {
+            sprintf(summary, "2P (Human vs Human): Player 2 (O) Wins");
+        }
+    }
+
+    fprintf(file, "%s\n", summary);
+    fclose(file);
+}
+
+/**
+ * @brief Loads the game history from "game_history.txt" into the state.
+ * * Reads up to the first 20 lines from the file to be displayed.
+ */
+void LoadGameHistory(void)
+{
+    game.historyLineCount = 0;
+    FILE* file = fopen("game_history.txt", "r"); // "r" mode = read
+    if (file == NULL) {
+        return; // No file, so historyLineCount stays 0
+    }
+
+    // Read up to 20 lines
+    while (game.historyLineCount < 20 && 
+           fgets(game.gameHistory[game.historyLineCount], 128, file) != NULL)
+    {
+        // Remove the newline character (\n) from the end of the line
+        game.gameHistory[game.historyLineCount][strcspn(game.gameHistory[game.historyLineCount], "\n")] = 0;
+        
+        game.historyLineCount++;
+    }
+
+    fclose(file);
+}
+
+/**
+ * @brief Clears all game history by truncating the file.
+ * * It opens the file in "w" (write) mode, which immediately
+ * * clears all its contents, and then closes it.
+ * * It also resets the in-memory line count so the screen updates.
+ */
+void ClearGameHistory(void)
+{
+    // "w" mode = write (this truncates the file to 0 bytes)
+    FILE* file = fopen("game_history.txt", "w");
+    if (file != NULL) {
+        fclose(file);
+    }
+    
+    // Also clear the history currently loaded into memory
+    game.historyLineCount = 0;
 }

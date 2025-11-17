@@ -72,6 +72,9 @@ int main(void)
             case SCREEN_INSTRUCTIONS:
                 HandleInstructionsScreen();
                 break;
+            case SCREEN_HISTORY:
+                HandleHistoryScreen();
+                break;
             case SCREEN_GAME:
                 HandleGameScreen();
                 break;
@@ -112,6 +115,9 @@ int main(void)
                 break;
             case SCREEN_INSTRUCTIONS:
                 DrawInstructionsScreen();
+                break;
+            case SCREEN_HISTORY:
+                DrawHistoryScreen();
                 break;
             case SCREEN_GAME:
                 DrawGameScreen();

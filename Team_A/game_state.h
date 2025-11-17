@@ -77,6 +77,7 @@ typedef enum {
     SCREEN_SYMBOL_SELECT_1P,
     SCREEN_SYMBOL_SELECT_2P,
     SCREEN_INSTRUCTIONS,
+    SCREEN_HISTORY,
     SCREEN_GAME,
     SCREEN_GAME_OVER    /**< Game over screen with results */
 } GameScreen;
@@ -165,6 +166,31 @@ typedef struct {
     // Save/Load Feedback
     char saveMessage[64];    // Buffer to hold "Game Saved!" or "Error"
     float saveMessageTimer; // Countdown timer to hide the message
+
+    // --- Undo System ---
+    /**
+     * @brief Stores the state of the game for each move.
+     * Used by the Undo button.
+     */
+    struct {
+        char board[3][3];
+        char currentPlayer;
+        bool aiTurn;
+    } moveHistory[9]; // Max 9 moves (0-8)
+    
+    /**
+     * @brief The number of moves currently stored in moveHistory.
+     * This acts as a stack pointer for our history.
+     */
+    int moveCount;
+
+    // --- History System ---
+    /**
+     * @brief A buffer to hold game history lines read from file.
+     * We'll read up to 20 lines.
+     */
+    char gameHistory[20][128];
+    int historyLineCount;
     
 } GameState;
 
@@ -261,5 +287,20 @@ void SaveGame(void);
  * * @return true if loading was successful, false otherwise
  */
 bool LoadGame(void);
+
+/**
+ * @brief Appends the result of the completed game to "game_history.txt"
+ */
+void AppendGameToHistory(void);
+
+/**
+ * @brief Loads the game history from "game_history.txt" into the state.
+ */
+void LoadGameHistory(void);
+
+/**
+ * @brief Clears all game history by truncating the history file.
+ */
+void ClearGameHistory(void);
 
 #endif // GAME_STATE_H

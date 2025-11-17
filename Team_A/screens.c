@@ -42,7 +42,8 @@ void DrawStartScreen(void)
     // Define button rectangles (using the centering helper)
     Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 260, 250, 70);
     Rectangle loadButton = CreateButton(SCREEN_WIDTH/2, 350, 250, 70);
-    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 440, 250, 70);
+    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2 - 130, 440, 250, 70);
+    Rectangle historyButton      = CreateButton(SCREEN_WIDTH/2 + 130, 440, 250, 70);
     Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 530, 250, 60);
     Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
 
@@ -50,6 +51,7 @@ void DrawStartScreen(void)
     DrawButton(playButton, "PLAY", colorSecondary);
     DrawButton(loadButton, "LOAD GAME", colorAccent);
     DrawButton(instructionsButton, "INSTRUCTIONS", colorPrimary);
+    DrawButton(historyButton, "HISTORY", colorPrimary); // Added
     DrawButton(themesButton, "THEMES", colorDark);
     
     // Fullscreen button text changes based on current state
@@ -70,7 +72,8 @@ void HandleStartScreen(void)
     // These *must* match the ones in DrawStartScreen
     Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 260, 250, 70);
     Rectangle loadButton = CreateButton(SCREEN_WIDTH/2, 350, 250, 70);
-    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2, 440, 250, 70);
+    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2 - 130, 440, 250, 70);
+    Rectangle historyButton      = CreateButton(SCREEN_WIDTH/2 + 130, 440, 250, 70);
     Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 530, 250, 60);
     Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
 
@@ -101,6 +104,11 @@ void HandleStartScreen(void)
         else if (IsButtonHovered(instructionsButton))
         {
             game.screen = SCREEN_INSTRUCTIONS; // Navigate to instructions
+        }
+        else if (IsButtonHovered(historyButton))
+        {
+            LoadGameHistory(); // Read the history file
+            game.screen = SCREEN_HISTORY;
         }
         else if (IsButtonHovered(fullscreenButton))
         {
@@ -392,25 +400,36 @@ void DrawGameScreen(void)
     DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, 80, 22, colorLight);
     
     // --- 2. Draw Current Turn Text ---
-    if (!game.gameOver)
+if (!game.gameOver)
+{
+    char turnText[64]; // Changed to a char array to support sprintf
+
+    if (game.mode == MODE_ONE_PLAYER)
     {
-        const char* turnText;
-        if (game.mode == MODE_ONE_PLAYER)
+        sprintf(turnText, game.aiTurn ? "AI's Turn" : "Your Turn");
+    }
+    else // 2P Mode
+    {
+        // This is the new logic.
+        // 'game.humanSymbol' stores Player 1's choice.
+        char p1Symbol = game.humanSymbol;
+        char p2Symbol = (game.humanSymbol == 'X') ? 'O' : 'X';
+
+        if (game.currentPlayer == p1Symbol)
         {
-            turnText = game.aiTurn ? "AI's Turn" : "Your Turn";
+            sprintf(turnText, "Player 1's Turn (%c)", p1Symbol);
         }
         else
         {
-            // In 2P mode, humanSymbol is P1, aiSymbol is not used
-            turnText = (game.currentPlayer == 'X') ? 
-                       "Player 1's Turn (X)" : "Player 2's Turn (O)";
+            sprintf(turnText, "Player 2's Turn (%c)", p2Symbol);
         }
-        
-        int turnWidth = MeasureText(turnText, 28);
-        // Use a different color if it's the AI's turn
-        Color turnColor = game.aiTurn ? colorAccent : colorSecondary;
-        DrawText(turnText, SCREEN_WIDTH/2 - turnWidth/2, 120, 28, turnColor);
     }
+
+    int turnWidth = MeasureText(turnText, 28);
+    // Use a different color if it's the AI's turn
+    Color turnColor = game.aiTurn ? colorAccent : colorSecondary;
+    DrawText(turnText, SCREEN_WIDTH/2 - turnWidth/2, 120, 28, turnColor);
+}
     
     // --- 3. Draw the Game Board & Pieces ---
     float boardSize = 360;
@@ -478,6 +497,15 @@ void DrawGameScreen(void)
         Color msgColor = (strncmp(game.saveMessage, "ERROR", 5) == 0) ? colorAccent : colorSecondary;
         DrawText(game.saveMessage, SCREEN_WIDTH / 2 - textWidth / 2, 555, 20, msgColor);
     }
+
+    // --- 5. Draw Undo Button (conditionally) ---
+    // Only draw the button if there is a move to undo
+    if (game.moveCount > 0)
+    {
+        // Positioned above the grid, on the right side
+        Rectangle undoButton = CreateButton(SCREEN_WIDTH/2 + 270, 215, 120, 50);
+        DrawButton(undoButton, "UNDO", colorAccent);
+    }
     
     // --- 5. Draw Bottom Buttons ---
     Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
@@ -493,8 +521,8 @@ void DrawGameScreen(void)
  * @brief Handles all logic for the main game screen.
  * * This is the most complex handler. It is responsible for:
  * 1. Counting down the save message timer.
- * 2. Running the AI move timer (for game feel) and triggering `MakeAIMove`.
- * 3. Handling clicks on the Restart, Save, and Menu buttons.
+ * 2. Handling clicks on Restart, Undo, Save, and Menu (always).
+ * 3. (If game not over) Running the AI move timer and triggering MakeAIMove.
  * 4. (If human turn) Handling clicks on the 3x3 game board.
  * 5. After a move, checking for a win/draw and changing state.
  */
@@ -505,12 +533,64 @@ void HandleGameScreen(void)
     {
         game.saveMessageTimer -= GetFrameTime(); // GetFrameTime is time since last frame
     }
+
+    // 2. Handle Human Button Input (Restart, Undo, Save, Menu)
+    // This logic runs *even if the game is over* so the user can
+    // undo their losing move or restart.
     
-    // If game is over, stop all game logic (input is handled by HandleGameOverScreen)
+    // Define button rectangles (MUST match DrawGameScreen)
+    // Define button rectangles (MUST match DrawGameScreen)
+    Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
+    Rectangle saveButton    = CreateButton(SCREEN_WIDTH/2, 595, 140, 50);
+    Rectangle menuButton    = CreateButton(SCREEN_WIDTH/2 + 170, 595, 140, 50);
+    Rectangle undoButton    = CreateButton(SCREEN_WIDTH/2 + 270, 215, 120, 50);
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        if (IsButtonHovered(restartButton))
+        {
+            ResetBoard(); // Just reset the board, keep settings
+            return; // Action taken, end this frame's logic
+        }
+        else if (game.moveCount > 0 && IsButtonHovered(undoButton)) // Only check if undo is possible
+        {
+            // --- HANDLE UNDO ---
+            if (game.moveCount > 0)
+            {
+                game.moveCount--; // Go back to the previous state index
+                
+                // Restore the board and turn info from history
+                memcpy(game.board, game.moveHistory[game.moveCount].board, sizeof(game.board));
+                game.currentPlayer = game.moveHistory[game.moveCount].currentPlayer;
+                game.aiTurn = game.moveHistory[game.moveCount].aiTurn;
+                
+                // The game is no longer over
+                game.gameOver = false;
+                game.winner = ' ';
+                
+                // Hide any messages
+                game.saveMessageTimer = 0.0f;
+            }
+            return; // Action taken, end this frame's logic
+        }
+        else if (IsButtonHovered(saveButton))
+        {
+            SaveGame(); // Save the game, but continue playing
+            return; // Action taken, end this frame's logic
+        }
+        else if (IsButtonHovered(menuButton))
+        {
+            game.screen = SCREEN_START; // Go to menu
+            return; // Action taken, end this frame's logic
+        }
+        // If no button was clicked, we will proceed to check the game board.
+    }
+    
+    // 3. Stop all game logic (AI turns, board clicks) if game is over
     if (game.gameOver)
         return;
     
-    // 2. Handle AI Turn Logic
+    // 4. Handle AI Turn Logic
     if (game.mode == MODE_ONE_PLAYER && game.aiTurn)
     {
         // This timer adds a small delay before the AI moves.
@@ -522,43 +602,22 @@ void HandleGameScreen(void)
             game.aiTurn = false; // AI turn is over
             
             // Check if the AI's move won the game
-            if (CheckWinner() || IsBoardFull())
+        if (CheckWinner() || IsBoardFull())
+        {
+            if (!game.gameOver) // Only append to history on the first frame it's over
             {
-                game.gameOver = true;
-                game.screen = SCREEN_GAME_OVER; // Go to game over state
+                AppendGameToHistory();
             }
+            game.gameOver = true;
+            game.screen = SCREEN_GAME_OVER; // Go to game over state
+        }
         }
         return; // IMPORTANT: If it's the AI's turn, skip all human input
     }
     
-    // 3. Handle Human Input (Buttons and Board)
-    
-    // Define button rectangles
-    Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
-    Rectangle saveButton = CreateButton(SCREEN_WIDTH/2, 595, 140, 50);
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 170, 595, 140, 50);
-
+    // 5. Handle Human Board Clicks (only if no button was pressed)
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        // Check buttons first
-        if (IsButtonHovered(restartButton))
-        {
-            ResetBoard(); // Just reset the board, keep settings
-            return;
-        }
-        else if (IsButtonHovered(saveButton))
-        {
-            SaveGame(); // Save the game, but continue playing
-            return;
-        }
-        else if (IsButtonHovered(menuButton))
-        {
-            game.screen = SCREEN_START; // Go to menu
-            return;
-        }
-            
-        // 4. Handle Board Clicks
-        // If no button was clicked, check the board
         float boardSize = 360;
         float boardX = SCREEN_WIDTH/2 - boardSize/2;
         float boardY = 180;
@@ -577,18 +636,34 @@ void HandleGameScreen(void)
                 // Check if mouse clicked this cell AND if it's empty
                 if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
                 {
+                    // --- SAVE STATE FOR UNDO ---
+                    // We only save right before a human move is made.
+                    // This works for both 1P (undoes human+AI) and 2P (undoes last move).
+                    if (game.moveCount < 9) 
+                    {
+                        memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
+                        game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
+                        game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
+                        game.moveCount++;
+                    }
+                    // --- END SAVE STATE ---
+
                     // Place the current player's symbol
                     game.board[i][j] = game.currentPlayer;
                     
-                    // 5. Check for Win/Draw
+                    // 6. Check for Win/Draw
                     if (CheckWinner() || IsBoardFull())
                     {
+                        if (!game.gameOver) // Only append to history on the first frame it's over
+                        {
+                            AppendGameToHistory();
+                        }
                         game.gameOver = true;
                         game.screen = SCREEN_GAME_OVER;
                         return; // Game over, stop processing
                     }
                     
-                    // 6. Switch Turns
+                    // 7. Switch Turns
                     if (game.mode == MODE_ONE_PLAYER)
                     {
                         game.aiTurn = true; // Set to AI's turn
@@ -650,18 +725,22 @@ void DrawGameOverScreen(void)
         }
     }
     else // 2P Mode
+{
+    char p1Symbol = game.humanSymbol; // Player 1's chosen symbol
+
+    if (game.winner == p1Symbol)
     {
-        if (game.winner == 'X')
-        {
-            resultText = "PLAYER 1 (X) WINS!";
-            resultColor = colorSecondary;
-        }
-        else
-        {
-            resultText = "PLAYER 2 (O) WINS!";
-            resultColor = colorSecondary;
-        }
+        // Player 1 wins
+        resultText = (p1Symbol == 'X') ? "PLAYER 1 (X) WINS!" : "PLAYER 1 (O) WINS!";
+        resultColor = colorSecondary;
     }
+    else
+    {
+        // Player 2 wins
+        resultText = (p1Symbol == 'X') ? "PLAYER 2 (O) WINS!" : "PLAYER 2 (X) WINS!";
+        resultColor = colorSecondary;
+    }
+}
     
     int resultWidth = MeasureText(resultText, 45);
     DrawText(resultText, SCREEN_WIDTH/2 - resultWidth/2, panelY + 30, 45, resultColor);
@@ -793,6 +872,78 @@ void HandleThemeSelectScreen(void)
         else if (IsButtonHovered(backButton))
         {
             game.screen = SCREEN_START; // Go back to start menu
+        }
+    }
+}
+
+// ============================================================================
+// HISTORY SCREEN
+// ============================================================================
+
+void DrawHistoryScreen(void)
+{
+    const char* title = "GAME HISTORY";
+    int titleWidth = MeasureText(title, 60);
+    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 50, 60, colorPrimary);
+
+    // Draw the instruction box
+    float boxWidth = 700;
+    float boxHeight = 450;
+    float boxX = (SCREEN_WIDTH / 2) - (boxWidth / 2);
+    float boxY = 130;
+    float textX = boxX + 20;
+
+    DrawRectangleRec((Rectangle){boxX, boxY, boxWidth, boxHeight}, colorLight);
+    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, 3, colorPrimary);
+
+    if (game.historyLineCount == 0)
+    {
+        // Show message if no history
+        const char* msg = "No game history found. Go play a game!";
+        int msgWidth = MeasureText(msg, 24);
+        DrawText(msg, SCREEN_WIDTH/2 - msgWidth/2, 300, 24, colorDark);
+    }
+    else
+    {
+        // Display each line of history
+        int yPos = boxY + 15; // Start text Y-position
+        for (int i = 0; i < game.historyLineCount; i++)
+        {
+            DrawText(game.gameHistory[i], textX, yPos, 20, colorDark);
+            yPos += 22; // Move down for the next line
+        }
+    }
+
+   // --- Draw Buttons ---
+    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 620, 200, 50);
+    DrawButton(backButton, "BACK", colorPrimary);
+
+    // Only draw the "CLEAR" button if there is history to clear
+    if (game.historyLineCount > 0)
+    {
+        Rectangle clearButton = CreateButton(SCREEN_WIDTH/2 + 245, 160, 200, 50);
+        DrawButton(clearButton, "CLEAR", colorAccent); // Use Accent color
+    }
+}
+
+void HandleHistoryScreen(void)
+{
+    // Define rectangles for both buttons
+    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 620, 200, 50);
+    Rectangle clearButton = CreateButton(SCREEN_WIDTH/2 + 245, 160, 200, 50);
+    
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        if (IsButtonHovered(backButton))
+        {
+            game.screen = SCREEN_START; // Go back to menu
+        }
+        // Only check the clear button if history exists (matches the draw logic)
+        else if (game.historyLineCount > 0 && IsButtonHovered(clearButton))
+        {
+            ClearGameHistory();
+            // The screen will automatically update on the next frame
+            // to show "No game history found."
         }
     }
 }
