@@ -1,39 +1,64 @@
-# Ignore custom project files
-task.json
+# ========================================
+# TIC-TAC-TOE PROJECT - .gitignore
+# ========================================
 
-# Ignore C build artefacts
-*.exe
+# Custom project files
+task.json
+tasks.json
+edit-tasks-json-file
+
+# C build artifacts (temporary files only)
 *.o
 *.ko
 *.obj
 *.elf
 *.out
 *.app
+*.gch
+*.pch
 
-# Ignore Code::Blocks build folders
-/bin/
+# Code::Blocks build folder artifacts (but allow bin folder for release)
 /obj/
 
-# Ignore Visual Studio Code settings (optional)
+# IDE settings
 .vscode/
+.vs/
+*.cbp
+*.depend
+*.layout
 
-# Ignore OS-specific files
+# OS-specific files
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Ignore editor swap/temp files
+# Editor swap/temp files
 *~
 *.swp
 *.tmp
+*.bak
+
+# Log files
 *.log
 
-# Ignore precompiled headers and libraries
-*.gch
-*.pch
-*.a
-*.so
-*.dylib
-*.dll
-*.lib
-*.la
-*.lo
+# Runtime generated files (user data)
+game_history
+save.dat
+*.save
+
+# ========================================
+# IMPORTANT: Allow these for deployment
+# ========================================
+
+# Allow pre-compiled executable for zero-install deployment
+!bin/
+!bin/*.exe
+!bin/*.json
+
+# Allow Raylib static library for rebuilding
+!lib/
+!lib/**/*.a
+!lib/**/*.h
+
+# Allow other static libraries if needed
+!**libraylib.a
