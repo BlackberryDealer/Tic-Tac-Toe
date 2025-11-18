@@ -13,13 +13,6 @@
  *    - Maximizer (AI) chooses moves that MAXIMIZE score
  *    - Minimizer (opponent) chooses moves that MINIMIZE score
  * 4. Assuming both players play optimally
- * 
- * Example for Tic-Tac-Toe:
- *           Current State
- *          /      |      \
- *     Move A   Move B   Move C  <- AI tries these (maximize)
- *      / \      / \      / \
- *    O's O's  O's O's  O's O's  <- Opponent responds (minimize)
  *    
  * Scores: +10 = AI wins, -10 = Opponent wins, 0 = Draw
  * AI picks the move with the highest guaranteed minimum score.
