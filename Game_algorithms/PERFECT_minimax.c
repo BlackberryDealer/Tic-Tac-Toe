@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "minimax.h"
+#include "minimax_utils.h"
 
 // ============================================================================
 // CONSTANTS AND STATIC VARIABLES
@@ -80,43 +81,8 @@
  * Check: (playerMask & WIN_MASK) == WIN_MASK
  * This is a single CPU instruction vs. checking multiple array positions.
  */
-static const int WIN_MASKS[8] = {
-    // ROWS: Three consecutive horizontal cells
-    (1 << 0) | (1 << 1) | (1 << 2),  // 0b000000111 - Top row
-    (1 << 3) | (1 << 4) | (1 << 5),  // 0b000111000 - Middle row
-    (1 << 6) | (1 << 7) | (1 << 8),  // 0b111000000 - Bottom row
-    
-    // COLUMNS: Three consecutive vertical cells
-    (1 << 0) | (1 << 3) | (1 << 6),  // 0b001001001 - Left column
-    (1 << 1) | (1 << 4) | (1 << 7),  // 0b010010010 - Middle column
-    (1 << 2) | (1 << 5) | (1 << 8),  // 0b100100100 - Right column
-    
-    // DIAGONALS: Corner-to-corner cells
-    (1 << 0) | (1 << 4) | (1 << 8),  // 0b100010001 - Main diagonal (\)
-    (1 << 2) | (1 << 4) | (1 << 6)   // 0b001010100 - Anti-diagonal (/)
-};
-
-/**
- * @brief Optimized move ordering for alpha-beta pruning
- * 
- * WHY THIS ORDER MATTERS:
- * Alpha-beta pruning is most efficient when good moves are explored first.
- * In Tic-Tac-Toe:
- * - Center (4): Controls most win lines (4 lines pass through it)
- * - Corners (0,2,6,8): Each controls 3 win lines
- * - Edges (1,3,5,7): Each controls only 2 win lines
- * 
- * PRUNING BENEFIT: By trying strong moves first, we establish tight alpha/beta
- * bounds early, allowing more branches to be pruned without evaluation.
- * 
- * MEMORY IMPACT: Fewer nodes explored = less stack space used in recursion.
- * Can reduce nodes explored from ~60,000 to ~5,000 in worst case.
- */
-static const int MOVE_ORDER[9] = {
-    4,          // Center - most strategic
-    0, 2, 6, 8, // Corners - second best
-    1, 3, 5, 7  // Edges - least strategic
-};
+// Shared utilities (WIN_MASKS, MOVE_ORDER, boardToMasks, isWinnerMask,
+// countBits) are provided by minimax_utils.c/h for consistency.
 
 // ============================================================================
 // BITBOARD UTILITY FUNCTIONS
@@ -146,60 +112,6 @@ static const int MOVE_ORDER[9] = {
  * @param maskX Output: bitmask where 1 = X is present at that position
  * @param maskO Output: bitmask where 1 = O is present at that position
  */
-static inline void boardToMasks(const char board[3][3], int *maskX, int *maskO) {
-    *maskX = 0;  // Initialize: all bits clear (no X pieces yet)
-    *maskO = 0;  // Initialize: all bits clear (no O pieces yet)
-    
-    // Scan entire board and set appropriate bits
-    for (int r = 0; r < 3; ++r) {
-        for (int c = 0; c < 3; ++c) {
-            int idx = r * 3 + c;      // Linear index: 0-8
-            char ch = board[r][c];     // Current cell content
-            
-            // Set the bit at position 'idx' if this cell has a piece
-            if (ch == 'X') 
-                *maskX |= (1 << idx);  // OR operation sets bit idx to 1
-            else if (ch == 'O') 
-                *maskO |= (1 << idx);  // OR operation sets bit idx to 1
-            // If ch == ' ' (empty), do nothing - bit stays 0
-        }
-    }
-}
-
-/**
- * @brief Check if a bitmask contains a winning line
- * 
- * ALGORITHM:
- * For each of the 8 winning patterns:
- *   Check if mask contains ALL bits of that pattern
- *   Formula: (mask & WIN_MASK) == WIN_MASK
- * 
- * BITWISE EXPLANATION:
- * - mask & WIN_MASK: Extracts only the bits corresponding to that win line
- * - Compare to WIN_MASK: If equal, player has pieces in all 3 positions
- * 
- * EXAMPLE:
- * mask     = 0b100010001 (pieces at positions 0, 4, 8)
- * WIN_MASKS[6] = 0b100010001 (main diagonal)
- * mask & WIN_MASKS[6] = 0b100010001 == WIN_MASKS[6] → TRUE (winner!)
- * 
- * EFFICIENCY: 8 comparisons vs. traditional nested loops checking all rows,
- * columns, and diagonals with multiple array accesses.
- * 
- * @param mask Bitmask to check (either X's pieces or O's pieces)
- * @return true if mask contains all 3 cells of any winning line, false otherwise
- */
-static inline bool isWinnerMask(int mask) {
-    // Check all 8 possible winning lines (3 rows + 3 cols + 2 diagonals)
-    for (int i = 0; i < 8; ++i) {
-        // Bitwise AND isolates the bits for this win line
-        // If all 3 bits are set, player has won via this line
-        if ((mask & WIN_MASKS[i]) == WIN_MASKS[i]) {
-            return true;  // Found a winning line!
-        }
-    }
-    return false;  // No winning line found
-}
 
 // ============================================================================
 // MINIMAX ALGORITHM WITH ALPHA-BETA PRUNING
@@ -252,6 +164,12 @@ static inline bool isWinnerMask(int mask) {
 static int minimax_masks(int playerMask, int oppMask, int depth,
                          int alpha, int beta, bool isMax)
 {
+    /*
+     * NOTE: minimax_masks remains in PERFECT_minimax.c because the perfect
+     * AI uses the full-depth search (depth up to 9) and a specific
+     * alpha-beta calling convention. Keeping this implementation local
+     * makes it clearer and avoids changing semantics accidentally.
+     */
     // ========================================================================
     // TERMINAL STATE CHECKS (Base Cases - Stop Recursion)
     // ========================================================================
@@ -387,14 +305,7 @@ static int minimax_masks(int playerMask, int oppMask, int depth,
  * @param mask Bitmask representing pieces on board
  * @return Number of set bits (pieces) in the mask
  */
-static inline int countBits(int mask) {
-    int count = 0;
-    while (mask) {
-        count += mask & 1;  // Add least significant bit to count
-        mask >>= 1;         // Shift right to process next bit
-    }
-    return count;
-}
+// countBits provided by minimax_utils.c
 
 // ============================================================================
 // PUBLIC API FUNCTION

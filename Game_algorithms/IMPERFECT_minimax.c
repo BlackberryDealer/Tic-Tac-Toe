@@ -21,6 +21,7 @@
 #include <time.h>
 #include "minimax.h"
 #include "model_minimax.h"
+#include "minimax_utils.h"
 
 // ============================================================================
 // CONSTANTS AND STATIC VARIABLES
@@ -46,21 +47,7 @@
  * Check: (playerMask & WIN_MASK) == WIN_MASK
  * This is a single CPU instruction vs. checking multiple array positions.
  */
-static const int WIN_MASKS[8] = {
-    // ROWS: Three consecutive horizontal cells
-    (1 << 0) | (1 << 1) | (1 << 2),  // 0b000000111 - Top row
-    (1 << 3) | (1 << 4) | (1 << 5),  // 0b000111000 - Middle row
-    (1 << 6) | (1 << 7) | (1 << 8),  // 0b111000000 - Bottom row
-    
-    // COLUMNS: Three consecutive vertical cells
-    (1 << 0) | (1 << 3) | (1 << 6),  // 0b001001001 - Left column
-    (1 << 1) | (1 << 4) | (1 << 7),  // 0b010010010 - Middle column
-    (1 << 2) | (1 << 5) | (1 << 8),  // 0b100100100 - Right column
-    
-    // DIAGONALS: Corner-to-corner cells
-    (1 << 0) | (1 << 4) | (1 << 8),  // 0b100010001 - Main diagonal (\)
-    (1 << 2) | (1 << 4) | (1 << 6)   // 0b001010100 - Anti-diagonal (/)
-};
+// WIN_MASKS and MOVE_ORDER are now in minimax_utils.h/.c
 
 // ============================================================================
 // BITBOARD UTILITY FUNCTIONS
@@ -115,44 +102,53 @@ static inline bool isWinnerMask(int mask) {
  * @param isMax true if AI's turn, false if opponent's turn
  * @return Score: positive for AI win, negative for human win, 0 for draw
  */
-static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
-    // Terminal state checks
-    if (isWinnerMask(playerMask)) return 10 - depth;  // AI wins
-    if (isWinnerMask(oppMask)) return -10 + depth;    // Human wins
-    if ((playerMask | oppMask) == 0x1FF || depth >= 5) return 0;  // Draw or depth cutoff
+// Imperfect minimax upgraded to use alpha-beta pruning for efficiency.
+// Logic preserved: depth cutoff at 5 and randomized move order remain.
+static int minimax_masks(int playerMask, int oppMask, int depth,
+                         int alpha, int beta, bool isMax) {
+    /*
+     * NOTE: This imperfect variant keeps its own minimax implementation
+     * because it enforces a depth cutoff (depth >= 5) and intentionally
+     * preserves randomized move ordering to keep the AI "imperfect".
+     * We added alpha-beta pruning for efficiency but kept the original
+     * cutoff and randomness so gameplay behavior is unchanged.
+     */
+    // Terminal checks (same as before)
+    if (isWinnerMask(playerMask)) return 10 - depth;
+    if (isWinnerMask(oppMask)) return -10 + depth;
+    if ((playerMask | oppMask) == 0x1FF || depth >= 5) return 0;
 
     int best = isMax ? -1000 : 1000;
     int moves[9], count = 0;
 
     // Collect available cells
     for (int i = 0; i < 9; ++i) {
-        if (!((playerMask | oppMask) & (1 << i))) {
-            moves[count++] = i;
-        }
+        if (!((playerMask | oppMask) & (1 << i))) moves[count++] = i;
     }
 
-    // Shuffle moves to add randomness
+    // Shuffle to keep AI imperfect (randomness preserved)
     for (int i = count - 1; i > 0; --i) {
         int j = rand() % (i + 1);
-        int tmp = moves[i];
-        moves[i] = moves[j];
-        moves[j] = tmp;
+        int tmp = moves[i]; moves[i] = moves[j]; moves[j] = tmp;
     }
 
-    // Evaluate each move
     for (int i = 0; i < count; ++i) {
         int pos = moves[i];
         int bit = (1 << pos);
-        
+
         if (isMax) {
-            int val = minimax_masks(playerMask | bit, oppMask, depth + 1, false);
+            int val = minimax_masks(playerMask | bit, oppMask, depth + 1, alpha, beta, false);
             if (val > best) best = val;
+            if (val > alpha) alpha = val;
+            if (alpha >= beta) break; // beta cutoff
         } else {
-            int val = minimax_masks(playerMask, oppMask | bit, depth + 1, true);
+            int val = minimax_masks(playerMask, oppMask | bit, depth + 1, alpha, beta, true);
             if (val < best) best = val;
+            if (val < beta) beta = val;
+            if (alpha >= beta) break; // alpha cutoff
         }
     }
-    
+
     return best;
 }
 
@@ -181,14 +177,7 @@ static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
  * @param mask Bitmask representing pieces on board
  * @return Number of set bits (pieces) in the mask
  */
-static inline int countBits(int mask) {
-    int count = 0;
-    while (mask) {
-        count += mask & 1;  // Add least significant bit to count
-        mask >>= 1;         // Shift right to process next bit
-    }
-    return count;
-}
+// countBits provided by minimax_utils.c
 
 
 // ============================================================================
@@ -261,8 +250,9 @@ struct Move findBestMoveImperfect(char board[3][3], char aiSymbol) {
         int pos = emptyCells[k];
         int bit = (1 << pos);
 
-        // Simulate AI placing at pos: pass (aiMask | bit) as the maximizing mask
-        int score = minimax_masks(aiMask | bit, oppMask, 1, false);
+    // Simulate AI placing at pos: pass (aiMask | bit) as the maximizing mask
+    // Use alpha-beta initial bounds (-1000, 1000)
+    int score = minimax_masks(aiMask | bit, oppMask, 1, -1000, 1000, false);
 
         if (score > bestVal) {
             bestVal = score;
