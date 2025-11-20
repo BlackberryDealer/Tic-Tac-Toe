@@ -136,7 +136,8 @@ int main(void)
         
         EndDrawing();
     }
-    
+     // OPTIMIZATION: Clean up dynamic memory before exit
+    CleanupGame();
     // Cleanup: close window and exit
     CloseWindow();
     return 0;

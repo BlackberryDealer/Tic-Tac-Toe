@@ -1,10 +1,12 @@
 /**
  * @file game_state.h
- * @brief Game state management module for Tic-Tac-Toe
- * * This module defines the core game state structure, including board state,
- * player information, game settings, and theme management. It provides
- * functions to initialize, reset, and manage the game state throughout
- * the application lifecycle.
+ * @brief Central header for game state and theme management
+ * 
+* This file defines:
+ * - The GameState struct that holds all game data
+ * - Theme system enums and structs
+ * - Global color variables
+ * - Function declarations for game logic
  */
 
 #ifndef GAME_STATE_H
@@ -12,7 +14,9 @@
 
 #include "raylib.h"
 #include <stdbool.h>
-#include <stdio.h> // For file I/O (Save/Load)
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Screen dimensions for responsive design
 // These macros ensure that UI calculations always use the *current* window size,
@@ -48,14 +52,14 @@ typedef enum {
  * accent, warning, background, dark, and light colors.
  */
 typedef struct {
-    const char* name;
-    Color primary;
-    Color secondary;
-    Color accent;
-    Color warning;
-    Color background;
-    Color dark;
-    Color light;        /**< Light color for text/UI elements */
+    const char* name;      // Name of the theme
+    Color primary;         // Primary color
+    Color secondary;       // Secondary color
+    Color accent;          // Accent color
+    Color warning;         // Warning color
+    Color background;      // Background color
+    Color dark;            // Dark shade
+    Color light;           // Light shade
 } Theme;
 
 // ============================================================================
@@ -70,54 +74,48 @@ typedef struct {
  * and `Draw...` functions to call each frame.
  */
 typedef enum {
-    SCREEN_START,                /**< Main menu screen */
-    SCREEN_MODE_SELECT,          /**< Player mode selection screen */
-    SCREEN_THEME_SELECT,         /**< Theme selection screen */
-    SCREEN_DIFFICULTY_SELECT,    /**< Difficulty selection screen */
-    SCREEN_SYMBOL_SELECT_1P,     /**< Symbol selection screen for 1-player mode */
-    SCREEN_SYMBOL_SELECT_2P,     /**< Symbol selection screen for 2-player mode */
-    SCREEN_INSTRUCTIONS,         /**< Instructions screen */
-    SCREEN_HISTORY,              /**< Game history screen */
-    SCREEN_GAME,                 /**< Main game screen */
-    SCREEN_GAME_OVER             /**< Game over screen with results */
+    SCREEN_START,              // Main menu
+    SCREEN_MODE_SELECT,        // Choose 1P or 2P
+    SCREEN_THEME_SELECT,       // Choose a theme
+    SCREEN_DIFFICULTY_SELECT,  // Choose AI difficulty (1P only)
+    SCREEN_SYMBOL_SELECT_1P,   // Choose X or O (1P)
+    SCREEN_SYMBOL_SELECT_2P,   // Choose who goes first (2P)
+    SCREEN_INSTRUCTIONS,       // How to play
+    SCREEN_HISTORY,            // View game history
+    SCREEN_GAME,               // The actual game
+    SCREEN_GAME_OVER           // Game ended
 } GameScreen;
 
 /**
  * @enum GameMode
- * @brief Defines the game play mode (single or two player)
+ * @brief Enum for game modes.
  */
 typedef enum {
-    MODE_ONE_PLAYER,
-    MODE_TWO_PLAYER     /**< Two human players mode */
+    MODE_ONE_PLAYER,  // Human vs AI
+    MODE_TWO_PLAYER   // Human vs Human
 } GameMode;
 
-// ============================================================================
-// DIFFICULTY CONSTANTS
-// ============================================================================
-// We use #define for difficulty instead of an enum. This is a stylistic
-// choice, but it allows these values to be used easily in contexts
-// that might not be expecting a specific enum type.
-
-/**
- * @def DIFF_EASY
- * @brief Easy difficulty - uses model-based AI (makes mistakes)
- */
+// Difficulty levels for AI
 #define DIFF_EASY 3
-
-/**
- * @def DIFF_MEDIUM
- * @brief Medium difficulty - uses imperfect minimax AI
- */
 #define DIFF_MEDIUM 2
-
-/**
- * @def DIFF_HARD
- * @brief Hard difficulty - uses perfect minimax AI (unbeatable)
- */
 #define DIFF_HARD 1
 
 // ============================================================================
-// GAME STATE STRUCTURE
+// OPTIMIZATION: Move History Structure (for UNDO feature)
+// ============================================================================
+
+/**
+ * @brief Stores the state of the game board for each move.
+ * Used by the Undo button to restore previous game states.
+ */
+typedef struct {
+    char board[3][3];
+    char currentPlayer;
+    bool aiTurn;
+} MoveSnapshot;
+
+// ============================================================================
+// MAIN GAME STATE
 // ============================================================================
 
 /**
@@ -164,19 +162,17 @@ typedef struct {
     ThemeID currentTheme; // Current theme ID
     
     // Save/Load Feedback
-    char saveMessage[64];    // Buffer to hold "Game Saved!" or "Error"
-    float saveMessageTimer; // Countdown timer to hide the message
+    // OPTIMIZATION: Using pointer instead of char array to save memory
+    const char *saveMessage;    // Pointer to message string ("Game Saved!" or "Error")
+    float saveMessageTimer;     // Countdown timer to hide the message
 
-    // --- Undo System ---
+
+    // --- OPTIMIZED Undo System ---
     /**
-     * @brief Stores the state of the game for each move.
-     * Used by the Undo button.
+     * @brief OPTIMIZATION: Dynamic array to store game state history.
+     * Allocated using malloc/realloc only when moves are made.
      */
-    struct {
-        char board[3][3];
-        char currentPlayer;
-        bool aiTurn;
-    } moveHistory[9]; // Max 9 moves (0-8)
+    MoveSnapshot *moveHistory;  // Dynamic array (replaces fixed moveHistory[9])
     
     /**
      * @brief The number of moves currently stored in moveHistory.
@@ -184,13 +180,30 @@ typedef struct {
      */
     int moveCount;
 
-    // --- History System ---
     /**
-     * @brief A buffer to hold game history lines read from file.
-     * We'll read up to 100 lines.
+     * @brief OPTIMIZATION: Tracks allocated capacity of moveHistory array.
+     * Allows us to grow the array dynamically with realloc.
      */
-    char gameHistory[100][128]; // Increased to 100 for better scrolling demo
+    int moveCapacity;
+
+
+    // --- OPTIMIZED History System ---
+    /**
+     * @brief OPTIMIZATION: Dynamic 2D array to hold game history lines read from file.
+     * Each element is a dynamically allocated string.
+     */
+    char **gameHistory;         // Dynamic array of strings (replaces gameHistory[100][128])
+    
+    /**
+     * @brief Number of lines currently in gameHistory.
+     */
     int historyLineCount;
+    
+    /**
+     * @brief OPTIMIZATION: Tracks allocated capacity of gameHistory array.
+     * Allows unlimited history without wasting memory.
+     */
+    int historyCapacity;
     
     // Tracks the scroll position (index of the top visible line)
     int historyScrollOffset; 
@@ -220,15 +233,14 @@ extern Color colorLight;
  */
 extern GameState game;
 
+// Array of all available themes
+extern Theme allThemes[THEME_COUNT];
+
 // ============================================================================
 // FUNCTION DECLARATIONS
 // ============================================================================
 
-/**
- * @brief Initialize the game state with default values
- * * Sets up the game with default settings, initializes the board,
- * and applies the default theme. Should be called once at program start.
- */
+// Core game functions
 void InitGame(void);
 
 /**
@@ -264,21 +276,10 @@ bool IsBoardFull(void);
  */
 void MakeAIMove(void);
 
-/**
- * @brief Change the active UI theme
- * * This function updates `game.currentTheme` and copies all colors
- * from the chosen `allThemes` entry into the global `Color` variables
- * (colorPrimary, etc.). The new colors will be used in the next draw cycle.
- * * @param newTheme The ID of the theme to apply.
- */
+// Theme management
 void ChangeTheme(ThemeID newTheme);
 
-/**
- * @brief Save the current GameState to a binary file
- * * Serializes the *entire* `game` struct and writes it to "save.dat".
- * This is a simple but non-portable save method. If the `GameState`
- * struct ever changes, old save files will become incompatible.
- */
+// Save/Load functions
 void SaveGame(void);
 
 /**

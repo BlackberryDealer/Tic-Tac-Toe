@@ -70,7 +70,7 @@ Theme allThemes[THEME_COUNT] = {
 };
 
 // ============================================================================
-// GLOBAL VARIABLE DEFINITIONS
+// GLOBAL VARIABLES
 // ============================================================================
 
 /** * Global UI color variables.
@@ -94,14 +94,12 @@ Color colorLight = {0};
 GameState game = {0};
 
 // ============================================================================
-// GAME INITIALIZATION FUNCTIONS
+// INITIALIZATION AND CLEANUP
 // ============================================================================
 
 /**
- * @brief Initializes the game state for the first launch.
- * * This function is called *once* at startup by `main.c`.
- * It sets all game parameters to their default values, applies the
- * default theme, and resets the board.
+ * @brief Initializes the game state with default values.
+ * Must be called once at the start of the program.
  */
 void InitGame(void)
 {
@@ -126,23 +124,60 @@ void InitGame(void)
     game.player2Wins = 0;
     game.draws = 0;
     
-    // Initialize UI settings
+    game.currentTheme = THEME_DEFAULT;
     game.isFullscreen = false;
-    game.saveMessageTimer = 0.0f; // Timer starts at 0 (hidden)
-    game.saveMessage[0] = '\0';   // Clear save message buffer
-    game.moveCount = 0;           // Initialize move history counter
-    game.historyLineCount = 0;    // Initialize history line count
-    ChangeTheme(THEME_DEFAULT);   // Apply the default theme
     
-    // Initialize board
+    // OPTIMIZATION: Initialize string pointer
+    game.saveMessage = NULL;
+    game.saveMessageTimer = 0.0f;
+    
+    // OPTIMIZATION: Initialize dynamic move history
+    game.moveHistory = NULL;
+    game.moveCount = 0;
+    game.moveCapacity = 0;
+    
+    // OPTIMIZATION: Initialize dynamic game history
+    game.gameHistory = NULL;
+    game.historyLineCount = 0;
+    game.historyCapacity = 0;
+    game.historyScrollOffset = 0;
+    
+    ChangeTheme(THEME_DEFAULT);
     ResetBoard();
 }
 
 /**
- * @brief Resets the board for a new game.
- * * This is called by `InitGame` but also by the "Play Again" button.
- * It's a separate function because we often want to start a new
- * round *without* resetting scores, theme, or game mode.
+ * @brief OPTIMIZATION: Frees all dynamically allocated memory.
+ * Must be called before program exit to prevent memory leaks.
+ */
+void CleanupGame(void) {
+    // Free move history
+    if (game.moveHistory != NULL) {
+        free(game.moveHistory);
+        game.moveHistory = NULL;
+    }
+    game.moveCount = 0;
+    game.moveCapacity = 0;
+    
+    // Free game history
+    if (game.gameHistory != NULL) {
+        for (int i = 0; i < game.historyLineCount; i++) {
+            free(game.gameHistory[i]);
+        }
+        free(game.gameHistory);
+        game.gameHistory = NULL;
+    }
+    game.historyLineCount = 0;
+    game.historyCapacity = 0;
+}
+
+// ============================================================================
+// BOARD MANAGEMENT
+// ============================================================================
+
+/**
+ * @brief Resets the game board to its initial state.
+ * Clears all cells, resets turn order, and prepares for a new game.
  */
 void ResetBoard(void)
 {
@@ -312,16 +347,11 @@ void MakeAIMove(void)
 // ============================================================================
 
 /**
- * @brief Applies a new theme to the game.
- * * This is the core of the theme system. It validates the theme ID,
- * updates the `game.currentTheme` state, and then *copies* all colors
- * from the `allThemes` array into the global `Color` variables.
- * Every drawing function uses these global colors, so they will
- * all update on the next frame.
+ * @brief Changes the current theme to the specified theme ID.
+ * Updates all global color variables to match the new theme.
+ * @param newTheme The ID of the theme to switch to.
  */
-void ChangeTheme(ThemeID newTheme)
-{
-    // Validate theme ID (prevent out-of-bounds access)
+void ChangeTheme(ThemeID newTheme) {
     if (newTheme >= THEME_COUNT) {
         newTheme = THEME_DEFAULT;
     }
@@ -329,7 +359,7 @@ void ChangeTheme(ThemeID newTheme)
     // Update current theme
     game.currentTheme = newTheme;
 
-    // Copy theme colors to global variables used by all draw functions
+    // Copy theme colors to globals
     colorPrimary = allThemes[newTheme].primary;
     colorSecondary = allThemes[newTheme].secondary;
     colorAccent = allThemes[newTheme].accent;
@@ -352,25 +382,21 @@ void ChangeTheme(ThemeID newTheme)
  * * It also sets a UI message (`game.saveMessage`) to give the user
  * feedback on the operation.
  */
-void SaveGame(void)
-{
-    FILE* file = fopen("save.dat", "wb"); // "wb" = Write Binary
+void SaveGame(void) {
+    FILE* file = fopen("save.dat", "wb");
     if (file == NULL) {
-        sprintf(game.saveMessage, "ERROR: Save Failed!");
-        game.saveMessageTimer = 2.0f; // Show message for 2 seconds
+        // OPTIMIZATION: Direct string assignment instead of strcpy
+        game.saveMessage = "ERROR: Save Failed!";
+        game.saveMessageTimer = 2.0f;
         return;
     }
 
-    // Write the entire 'game' struct (1 item of size GameState) to the file
-    size_t itemsWritten = fwrite(&game, sizeof(GameState), 1, file);
+    fwrite(&game, sizeof(GameState), 1, file);
     fclose(file);
 
-    if (itemsWritten != 1) {
-        sprintf(game.saveMessage, "ERROR: Write Failed!");
-    } else {
-        sprintf(game.saveMessage, "Game Saved!");
-    }
-    game.saveMessageTimer = 2.0f; // Show message for 2 seconds
+    // OPTIMIZATION: Direct string assignment instead of strcpy
+    game.saveMessage = "Game Saved!";
+    game.saveMessageTimer = 2.0f;
 }
 
 /**
@@ -477,16 +503,29 @@ void LoadGameHistory(void)
     game.historyLineCount = 0;
     FILE* file = fopen("game_history.txt", "r"); // "r" mode = read
     if (file == NULL) {
-        return; // No file, so historyLineCount stays 0
+        return;
     }
-
-    // Read up to 100 lines
-    while (game.historyLineCount < 100 && 
-           fgets(game.gameHistory[game.historyLineCount], 128, file) != NULL)
-    {
-        // Remove the newline character (\n) from the end of the line
-        game.gameHistory[game.historyLineCount][strcspn(game.gameHistory[game.historyLineCount], "\n")] = 0;
+    
+    char buffer[128];
+    while (fgets(buffer, 128, file) != NULL) {
+        // OPTIMIZATION: Expand capacity if needed using realloc
+        if (game.historyLineCount >= game.historyCapacity) {
+            int newCapacity = (game.historyCapacity == 0) ? 10 : game.historyCapacity * 2;
+            char **newHistory = (char **)realloc(game.gameHistory, newCapacity * sizeof(char *));
+            
+            if (newHistory == NULL) break;  // Allocation failed
+            
+            game.gameHistory = newHistory;
+            game.historyCapacity = newCapacity;
+        }
         
+        // Remove newline character
+        buffer[strcspn(buffer, "\n")] = 0;
+        
+        // OPTIMIZATION: Allocate exact size needed for this string
+        game.gameHistory[game.historyLineCount] = (char *)malloc(strlen(buffer) + 1);
+        if (game.gameHistory[game.historyLineCount] != NULL) {
+            strcpy(game.gameHistory[game.historyLineCount], buffer);
         game.historyLineCount++;
     }
 
@@ -494,19 +533,24 @@ void LoadGameHistory(void)
 }
 
 /**
- * @brief Clears all game history by truncating the file.
- * * It opens the file in "w" (write) mode, which immediately
- * * clears all its contents, and then closes it.
- * * It also resets the in-memory line count so the screen updates.
+ * @brief OPTIMIZATION: Clears all game history from file and memory.
+ * Frees all dynamically allocated strings and resets counters.
  */
-void ClearGameHistory(void)
-{
-    // "w" mode = write (this truncates the file to 0 bytes)
+void ClearGameHistory(void) {
     FILE* file = fopen("game_history.txt", "w");
     if (file != NULL) {
         fclose(file);
     }
     
-    // Also clear the history currently loaded into memory
+    // OPTIMIZATION: Free all allocated strings
+    if (game.gameHistory != NULL) {
+        for (int i = 0; i < game.historyLineCount; i++) {
+            free(game.gameHistory[i]);
+        }
+        free(game.gameHistory);
+        game.gameHistory = NULL;
+    }
     game.historyLineCount = 0;
+    game.historyCapacity = 0;
+    game.historyScrollOffset = 0;
 }

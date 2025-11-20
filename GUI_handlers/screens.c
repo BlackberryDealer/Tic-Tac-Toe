@@ -746,13 +746,30 @@ void HandleGameScreen(void)
                 if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
                 {
                     // Save state for undo
-                    if (game.moveCount < 9)
-                    {
-                        memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
-                        game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
-                        game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
-                        game.moveCount++;
+                   // OPTIMIZATION: Dynamically allocate move history using realloc
+                    if (game.moveCount >= game.moveCapacity) {
+                        int newCapacity = (game.moveCapacity == 0) ? 4 : game.moveCapacity * 2;
+                        
+                        MoveSnapshot *newHistory = (MoveSnapshot *)realloc(
+                            game.moveHistory,
+                            newCapacity * sizeof(MoveSnapshot)
+                        );
+                        
+                        if (newHistory != NULL) {
+                            game.moveHistory = newHistory;
+                            game.moveCapacity = newCapacity;
+                        } else {
+                            goto skip_move_save;  // Allocation failed, skip saving this move
+                        }
                     }
+
+                    // Save current state
+                    memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
+                    game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
+                    game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
+                    game.moveCount++;
+
+                    skip_move_save:
                     
                     // Place the current player's symbol
                     game.board[i][j] = game.currentPlayer;
