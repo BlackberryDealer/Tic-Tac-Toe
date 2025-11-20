@@ -187,11 +187,13 @@ typedef struct {
     // --- History System ---
     /**
      * @brief A buffer to hold game history lines read from file.
-     * We'll read up to 20 lines.
+     * We'll read up to 100 lines.
      */
-    char gameHistory[20][128];
+    char gameHistory[100][128]; // Increased to 100 for better scrolling demo
     int historyLineCount;
     
+    // Tracks the scroll position (index of the top visible line)
+    int historyScrollOffset; 
 } GameState;
 
 // ============================================================================

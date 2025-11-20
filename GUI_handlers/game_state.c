@@ -480,8 +480,8 @@ void LoadGameHistory(void)
         return; // No file, so historyLineCount stays 0
     }
 
-    // Read up to 20 lines
-    while (game.historyLineCount < 20 && 
+    // Read up to 100 lines
+    while (game.historyLineCount < 100 && 
            fgets(game.gameHistory[game.historyLineCount], 128, file) != NULL)
     {
         // Remove the newline character (\n) from the end of the line

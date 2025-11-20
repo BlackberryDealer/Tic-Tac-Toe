@@ -1,57 +1,107 @@
 /**
  * @file screens.c
  * @brief Implements all screen drawing and handling logic
- * * This file contains the implementation for every function declared
- * in `screens.h`. It is the core of the "View" (drawing) and
- * "Controller" (input handling) for the application.
- * * Each screen (`SCREEN_START`, `SCREEN_GAME`, etc.) has two functions:
- * 1. `Draw...Screen()`: Renders the UI for that screen.
- * 2. `Handle...Screen()`: Processes input (e.g., button clicks) for that screen.
- * * This separation keeps the logic clean and organized.
  */
 
 #include "screens.h"
-#include <stdio.h>      // For sprintf (in DrawGameScreen)
-#include "game_state.h" // Access to the global 'game' state and colors
-#include "ui.h"         // For button helper functions
-#include "../Game_algorithms/minimax.h" // Access to AI functions (MakeAIMove)
-#include <string.h>     // For strncmp (in DrawGameScreen)
+#include <stdio.h>
+#include "game_state.h"
+#include "ui.h"
+#include "../Game_algorithms/minimax.h"
+#include <string.h>
+
+// ============================================================================
+// RESPONSIVE DESIGN SYSTEM
+// ============================================================================
+// The game is designed for 1280x720 resolution.
+// These functions scale coordinates to fit any window size while staying centered.
+
+#define DESIGN_WIDTH 1280.0f
+#define DESIGN_HEIGHT 720.0f
+
+/**
+ * @brief Calculates how much to scale the UI to fit the current window.
+ * @return Scale factor (e.g., 1.0 for 1280x720, 2.0 for 2560x1440)
+ */
+static float CalculateScaleFactor(void) 
+{
+    float scaleX = (float)GetScreenWidth() / DESIGN_WIDTH;
+    float scaleY = (float)GetScreenHeight() / DESIGN_HEIGHT;
+    // Use smaller scale to maintain aspect ratio (adds black bars if needed)
+    return (scaleX < scaleY) ? scaleX : scaleY;
+}
+
+/**
+ * @brief Calculates horizontal padding to center the game.
+ */
+static float CalculateHorizontalOffset(void) 
+{
+    float scale = CalculateScaleFactor();
+    return ((float)GetScreenWidth() - (DESIGN_WIDTH * scale)) / 2.0f;
+}
+
+/**
+ * @brief Calculates vertical padding to center the game.
+ */
+static float CalculateVerticalOffset(void) 
+{
+    float scale = CalculateScaleFactor();
+    return ((float)GetScreenHeight() - (DESIGN_HEIGHT * scale)) / 2.0f;
+}
+
+/**
+ * @brief Converts a design X coordinate (0-1280) to actual screen X coordinate.
+ */
+static float ScaleX(float designX) 
+{
+    return CalculateHorizontalOffset() + (designX * CalculateScaleFactor());
+}
+
+/**
+ * @brief Converts a design Y coordinate (0-720) to actual screen Y coordinate.
+ */
+static float ScaleY(float designY) 
+{
+    return CalculateVerticalOffset() + (designY * CalculateScaleFactor());
+}
+
+/**
+ * @brief Scales a size value (width, height, font size, etc.) to match window size.
+ */
+static float ScaleSize(float designSize) 
+{
+    return designSize * CalculateScaleFactor();
+}
 
 // ============================================================================
 // START SCREEN
 // ============================================================================
-
-/**
- * @brief Draws the main menu screen UI.
- * * This function is purely for rendering. It uses helper functions
- * from `ui.c` (like `CreateButton` and `DrawButton`) to draw the
- * interface. All logic is in `HandleStartScreen`.
- */
 void DrawStartScreen(void)
 {
     // Draw Title
     const char* title = "TIC-TAC-TOE";
-    int titleSize = 80;
+    int titleSize = ScaleSize(80);
     int titleWidth = MeasureText(title, titleSize);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 100, titleSize, colorPrimary);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(100), titleSize, colorPrimary);
     
     const char* subtitle = "Classic Strategy Game";
-    int subtitleWidth = MeasureText(subtitle, 25);
-    DrawText(subtitle, SCREEN_WIDTH/2 - subtitleWidth/2, 190, 25, colorLight);
+    int subtitleSize = ScaleSize(25);
+    int subtitleWidth = MeasureText(subtitle, subtitleSize);
+    DrawText(subtitle, ScaleX(640) - subtitleWidth/2, ScaleY(190), subtitleSize, colorLight);
     
     // Define button rectangles (using the centering helper)
-    Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 260, 250, 70);
-    Rectangle loadButton = CreateButton(SCREEN_WIDTH/2, 350, 250, 70);
-    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2 - 130, 440, 250, 70);
-    Rectangle historyButton      = CreateButton(SCREEN_WIDTH/2 + 130, 440, 250, 70);
-    Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 530, 250, 60);
-    Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
-
+    Rectangle playButton = CreateButton(ScaleX(640), ScaleY(260), ScaleSize(250), ScaleSize(70));
+    Rectangle loadButton = CreateButton(ScaleX(640), ScaleY(350), ScaleSize(250), ScaleSize(70));
+    Rectangle instructionsButton = CreateButton(ScaleX(640 - 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
+    Rectangle historyButton = CreateButton(ScaleX(640 + 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
+    Rectangle fullscreenButton = CreateButton(ScaleX(640), ScaleY(530), ScaleSize(250), ScaleSize(60));
+    Rectangle themesButton = CreateButton(ScaleX(1280 - 90), ScaleY(720 - 40), ScaleSize(160), ScaleSize(50));
+    
     // Draw the buttons
     DrawButton(playButton, "PLAY", colorSecondary);
     DrawButton(loadButton, "LOAD GAME", colorAccent);
     DrawButton(instructionsButton, "INSTRUCTIONS", colorPrimary);
-    DrawButton(historyButton, "HISTORY", colorPrimary); // Added
+    DrawButton(historyButton, "HISTORY", colorPrimary);
     DrawButton(themesButton, "THEMES", colorDark);
     
     // Fullscreen button text changes based on current state
@@ -59,65 +109,47 @@ void DrawStartScreen(void)
     DrawButton(fullscreenButton, fullscreenText, colorWarning);
 }
 
-/**
- * @brief Handles all input for the main menu screen.
- * * This function checks for mouse clicks on the buttons defined
- * in `DrawStartScreen`. When a button is clicked, it changes
- * the game state (e.g., `game.screen = SCREEN_MODE_SELECT`)
- * to navigate to a new screen.
- */
 void HandleStartScreen(void)
 {
     // Re-create button rectangles to check for collisions
-    // These *must* match the ones in DrawStartScreen
-    Rectangle playButton = CreateButton(SCREEN_WIDTH/2, 260, 250, 70);
-    Rectangle loadButton = CreateButton(SCREEN_WIDTH/2, 350, 250, 70);
-    Rectangle instructionsButton = CreateButton(SCREEN_WIDTH/2 - 130, 440, 250, 70);
-    Rectangle historyButton      = CreateButton(SCREEN_WIDTH/2 + 130, 440, 250, 70);
-    Rectangle fullscreenButton = CreateButton(SCREEN_WIDTH/2, 530, 250, 60);
-    Rectangle themesButton = CreateButton(SCREEN_WIDTH - 90, SCREEN_HEIGHT - 40, 160, 50);
-
-    // Check for a click *once*
+    Rectangle playButton = CreateButton(ScaleX(640), ScaleY(260), ScaleSize(250), ScaleSize(70));
+    Rectangle loadButton = CreateButton(ScaleX(640), ScaleY(350), ScaleSize(250), ScaleSize(70));
+    Rectangle instructionsButton = CreateButton(ScaleX(640 - 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
+    Rectangle historyButton = CreateButton(ScaleX(640 + 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
+    Rectangle fullscreenButton = CreateButton(ScaleX(640), ScaleY(530), ScaleSize(250), ScaleSize(60));
+    Rectangle themesButton = CreateButton(ScaleX(1280 - 90), ScaleY(720 - 40), ScaleSize(160), ScaleSize(50));
+    
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        // Check which button was clicked
         if (IsButtonHovered(playButton))
         {
-            game.screen = SCREEN_MODE_SELECT; // Navigate to mode select
+            game.screen = SCREEN_MODE_SELECT;
         }
         else if (IsButtonHovered(loadButton))
         {
-            // Try to load a game.
-            // If `LoadGame()` is successful (returns true),
-            // jump directly into the game screen.
             if (LoadGame())
             {
                 game.screen = SCREEN_GAME;
             }
-            // else: LoadGame() returned false (no file/corrupt),
-            // so we do nothing and stay on the start screen.
         }
         else if (IsButtonHovered(themesButton))
         {
-            game.screen = SCREEN_THEME_SELECT; // Navigate to theme select
+            game.screen = SCREEN_THEME_SELECT;
         }
         else if (IsButtonHovered(instructionsButton))
         {
-            game.screen = SCREEN_INSTRUCTIONS; // Navigate to instructions
+            game.screen = SCREEN_INSTRUCTIONS;
         }
         else if (IsButtonHovered(historyButton))
         {
-            LoadGameHistory(); // Read the history file
+            LoadGameHistory();
             game.screen = SCREEN_HISTORY;
         }
         else if (IsButtonHovered(fullscreenButton))
         {
-            // Handle fullscreen toggle
             game.isFullscreen = !game.isFullscreen;
-            
             if (game.isFullscreen)
             {
-                // Go to borderless windowed fullscreen
                 int monitor = GetCurrentMonitor();
                 SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
                 SetWindowPosition(0, 0);
@@ -125,10 +157,8 @@ void HandleStartScreen(void)
             }
             else
             {
-                // Return to windowed mode
                 ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
                 SetWindowSize(1280, 720);
-                // Center the window
                 int monitor = GetCurrentMonitor();
                 int monitorWidth = GetMonitorWidth(monitor);
                 int monitorHeight = GetMonitorHeight(monitor);
@@ -141,16 +171,16 @@ void HandleStartScreen(void)
 // ============================================================================
 // MODE SELECT SCREEN
 // ============================================================================
-
 void DrawModeSelectScreen(void)
 {
     const char* title = "SELECT MODE";
-    int titleWidth = MeasureText(title, 60);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 80, 60, colorPrimary);
+    int titleSize = ScaleSize(60);
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(80), titleSize, colorPrimary);
     
-    Rectangle onePlayerButton = CreateButton(SCREEN_WIDTH/2, 250, 300, 80);
-    Rectangle twoPlayerButton = CreateButton(SCREEN_WIDTH/2, 370, 300, 80);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 490, 200, 60);
+    Rectangle onePlayerButton = CreateButton(ScaleX(640), ScaleY(250), ScaleSize(300), ScaleSize(80));
+    Rectangle twoPlayerButton = CreateButton(ScaleX(640), ScaleY(370), ScaleSize(300), ScaleSize(80));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(490), ScaleSize(200), ScaleSize(60));
     
     DrawButton(onePlayerButton, "1 PLAYER", colorSecondary);
     DrawButton(twoPlayerButton, "2 PLAYERS", colorWarning);
@@ -159,41 +189,43 @@ void DrawModeSelectScreen(void)
 
 void HandleModeSelectScreen(void)
 {
-    Rectangle onePlayerButton = CreateButton(SCREEN_WIDTH/2, 250, 300, 80);
-    Rectangle twoPlayerButton = CreateButton(SCREEN_WIDTH/2, 370, 300, 80);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 490, 200, 60);
+    Rectangle onePlayerButton = CreateButton(ScaleX(640), ScaleY(250), ScaleSize(300), ScaleSize(80));
+    Rectangle twoPlayerButton = CreateButton(ScaleX(640), ScaleY(370), ScaleSize(300), ScaleSize(80));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(490), ScaleSize(200), ScaleSize(60));
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         if (IsButtonHovered(onePlayerButton))
         {
             game.mode = MODE_ONE_PLAYER;
-            game.screen = SCREEN_DIFFICULTY_SELECT; // 1P needs difficulty
+            game.screen = SCREEN_DIFFICULTY_SELECT;
         }
         else if (IsButtonHovered(twoPlayerButton))
         {
             game.mode = MODE_TWO_PLAYER;
-            game.screen = SCREEN_SYMBOL_SELECT_2P; // 2P skips difficulty
+            game.screen = SCREEN_SYMBOL_SELECT_2P;
         }
         else if (IsButtonHovered(backButton))
+        {
             game.screen = SCREEN_START;
+        }
     }
 }
 
 // ============================================================================
 // DIFFICULTY SELECT SCREEN
 // ============================================================================
-
 void DrawDifficultySelectScreen(void)
 {
     const char* title = "SELECT DIFFICULTY";
-    int titleWidth = MeasureText(title, 55);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 70, 55, colorPrimary);
+    int titleSize = ScaleSize(55);
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(70), titleSize, colorPrimary);
     
-    Rectangle easyButton = CreateButton(SCREEN_WIDTH/2, 200, 280, 75);
-    Rectangle mediumButton = CreateButton(SCREEN_WIDTH/2, 305, 280, 75);
-    Rectangle hardButton = CreateButton(SCREEN_WIDTH/2, 410, 280, 75);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 520, 200, 60);
+    Rectangle easyButton = CreateButton(ScaleX(640), ScaleY(200), ScaleSize(280), ScaleSize(75));
+    Rectangle mediumButton = CreateButton(ScaleX(640), ScaleY(305), ScaleSize(280), ScaleSize(75));
+    Rectangle hardButton = CreateButton(ScaleX(640), ScaleY(410), ScaleSize(280), ScaleSize(75));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(520), ScaleSize(200), ScaleSize(60));
     
     DrawButton(easyButton, "EASY", colorSecondary);
     DrawButton(mediumButton, "MEDIUM", colorWarning);
@@ -203,10 +235,10 @@ void DrawDifficultySelectScreen(void)
 
 void HandleDifficultySelectScreen(void)
 {
-    Rectangle easyButton = CreateButton(SCREEN_WIDTH/2, 200, 280, 75);
-    Rectangle mediumButton = CreateButton(SCREEN_WIDTH/2, 305, 280, 75);
-    Rectangle hardButton = CreateButton(SCREEN_WIDTH/2, 410, 280, 75);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 520, 200, 60);
+    Rectangle easyButton = CreateButton(ScaleX(640), ScaleY(200), ScaleSize(280), ScaleSize(75));
+    Rectangle mediumButton = CreateButton(ScaleX(640), ScaleY(305), ScaleSize(280), ScaleSize(75));
+    Rectangle hardButton = CreateButton(ScaleX(640), ScaleY(410), ScaleSize(280), ScaleSize(75));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(520), ScaleSize(200), ScaleSize(60));
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
@@ -226,47 +258,36 @@ void HandleDifficultySelectScreen(void)
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
         else if (IsButtonHovered(backButton))
-            game.screen = SCREEN_MODE_SELECT; // Go back to mode select
+        {
+            game.screen = SCREEN_MODE_SELECT;
+        }
     }
 }
 
 // ============================================================================
 // SYMBOL SELECT SCREEN
 // ============================================================================
-
-/**
- * @brief Draws the 'X' or 'O' selection screen.
- * * This function is reused for both 1P and 2P modes.
- * The `isPlayer1` parameter just changes the title text.
- */
 void DrawSymbolSelectScreen(bool isPlayer1)
 {
     const char* title = isPlayer1 ? "PLAYER 1: CHOOSE SYMBOL" : "CHOOSE YOUR SYMBOL";
-    int titleWidth = MeasureText(title, 50);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 80, 50, colorPrimary);
+    int titleSize = ScaleSize(50);
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(80), titleSize, colorPrimary);
     
-    Rectangle xButton = CreateButton(SCREEN_WIDTH/2 - 130, 280, 180, 180);
-    Rectangle oButton = CreateButton(SCREEN_WIDTH/2 + 130, 280, 180, 180);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 500, 200, 60);
+    Rectangle xButton = CreateButton(ScaleX(640 - 130), ScaleY(280), ScaleSize(180), ScaleSize(180));
+    Rectangle oButton = CreateButton(ScaleX(640 + 130), ScaleY(280), ScaleSize(180), ScaleSize(180));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(500), ScaleSize(200), ScaleSize(60));
     
     DrawButton(xButton, "X", colorPrimary);
     DrawButton(oButton, "O", colorAccent);
     DrawButton(backButton, "BACK", colorDark);
 }
 
-/**
- * @brief Handles symbol selection for both 1P and 2P modes.
- * * This function sets the player symbols (`game.humanSymbol`, `game.aiSymbol`)
- * based on the selection and game mode.
- * After selection, it *always* calls `ResetBoard()` to set up the
- * board correctly (e.g., if 'O' is chosen, AI must go first)
- * and then navigates to the main game screen.
- */
 void HandleSymbolSelectScreen(bool isPlayer1)
 {
-    Rectangle xButton = CreateButton(SCREEN_WIDTH/2 - 130, 280, 180, 180);
-    Rectangle oButton = CreateButton(SCREEN_WIDTH/2 + 130, 280, 180, 180);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 500, 200, 60);
+    Rectangle xButton = CreateButton(ScaleX(640 - 130), ScaleY(280), ScaleSize(180), ScaleSize(180));
+    Rectangle oButton = CreateButton(ScaleX(640 + 130), ScaleY(280), ScaleSize(180), ScaleSize(180));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(500), ScaleSize(200), ScaleSize(60));
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
@@ -279,10 +300,9 @@ void HandleSymbolSelectScreen(bool isPlayer1)
             }
             else
             {
-                game.humanSymbol = 'X'; // P1 is X
-                // P2 will be 'O' by default
+                game.humanSymbol = 'X';
             }
-            ResetBoard(); // CRITICAL: Reset board *after* setting symbols
+            ResetBoard();
             game.screen = SCREEN_GAME;
         }
         else if (IsButtonHovered(oButton))
@@ -294,19 +314,21 @@ void HandleSymbolSelectScreen(bool isPlayer1)
             }
             else
             {
-                game.humanSymbol = 'O'; // P1 is O
-                // P2 will be 'X' by default
+                game.humanSymbol = 'O';
             }
-            ResetBoard(); // CRITICAL: Reset board *after* setting symbols
+            ResetBoard();
             game.screen = SCREEN_GAME;
         }
         else if (IsButtonHovered(backButton))
         {
-            // Go back to the correct previous screen
             if (isPlayer1)
-                game.screen = SCREEN_MODE_SELECT; // 2P mode goes back to Mode Select
+            {
+                game.screen = SCREEN_MODE_SELECT;
+            }
             else
-                game.screen = SCREEN_DIFFICULTY_SELECT; // 1P mode goes back to Difficulty
+            {
+                game.screen = SCREEN_DIFFICULTY_SELECT;
+            }
         }
     }
 }
@@ -314,24 +336,21 @@ void HandleSymbolSelectScreen(bool isPlayer1)
 // ============================================================================
 // INSTRUCTIONS SCREEN
 // ============================================================================
-
 void DrawInstructionsScreen(void)
 {
     const char* title = "INSTRUCTIONS";
-    int titleWidth = MeasureText(title, 60);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 50, 60, colorPrimary);
+    int titleSize = ScaleSize(60);
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(50), titleSize, colorPrimary);
     
-    // Calculate centered positions for the instruction box
-    // This makes it responsive to different window sizes.
-    float boxWidth = 600;
-    float boxHeight = 380;
-    float boxX = (SCREEN_WIDTH / 2) - (boxWidth / 2);
-    float boxY = 130;
-    float textX = boxX + 20;
-
-    // Draw the instruction box
+    float boxWidth = ScaleSize(600);
+    float boxHeight = ScaleSize(380);
+    float boxX = ScaleX(640) - boxWidth/2;
+    float boxY = ScaleY(130);
+    float textX = boxX + ScaleSize(20);
+    
     DrawRectangleRec((Rectangle){boxX, boxY, boxWidth, boxHeight}, colorLight);
-    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, 3, colorPrimary);
+    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, ScaleSize(3), colorPrimary);
     
     const char* instructions[] = {
         "HOW TO PLAY:",
@@ -349,362 +368,418 @@ void DrawInstructionsScreen(void)
         "Click on an empty square to place your symbol!"
     };
     
-   int yPos = boxY + 20; // Start text Y-position relative to the box
+    float yPos = boxY + ScaleSize(20);
+    int textSize = ScaleSize(22);
     for (int i = 0; i < 13; i++)
     {
-        DrawText(instructions[i], textX, yPos, 22, colorDark);
-        yPos += 28; // Move down for the next line
+        DrawText(instructions[i], textX, yPos, textSize, colorDark);
+        yPos += ScaleSize(28);
     }
     
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 540, 200, 50);
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
     DrawButton(backButton, "BACK", colorPrimary);
 }
 
 void HandleInstructionsScreen(void)
 {
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 540, 200, 50);
-    
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsButtonHovered(backButton))
-        game.screen = SCREEN_START; // Always go back to the start screen
+    {
+        game.screen = SCREEN_START;
+    }
 }
 
 // ============================================================================
 // GAME SCREEN
 // ============================================================================
-/**
-* @brief Draws the main game screen (scores, board, buttons).
-* * This is one of the most complex draw functions as it has to
-* reflect many different states:
-* - Current turn (Human vs. AI, P1 vs. P2)
-* - The `game.board[3][3]` array (drawing X's and O's)
-* - The hover effect over empty cells
-* - The "Game Saved!" message
-* - NEW: The winning line highlight
-*/
 void DrawGameScreen(void)
 {
     // --- 1. Draw Header & Scores ---
     const char* header = (game.mode == MODE_ONE_PLAYER) ? "YOU vs AI" : "PLAYER 1 vs PLAYER 2";
-    int headerWidth = MeasureText(header, 40);
-    DrawText(header, SCREEN_WIDTH/2 - headerWidth/2, 30, 40, colorPrimary);
-
+    int headerSize = ScaleSize(40);
+    int headerWidth = MeasureText(header, headerSize);
+    DrawText(header, ScaleX(640) - headerWidth/2, ScaleY(30), headerSize, colorPrimary);
+    
     char scoreText[64];
     if (game.mode == MODE_ONE_PLAYER)
+    {
         sprintf(scoreText, "You: %d | AI: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
+    }
     else
+    {
         sprintf(scoreText, "P1: %d | P2: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
-
-    int scoreWidth = MeasureText(scoreText, 22);
-    DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, 80, 22, colorLight);
-
+    }
+    
+    int scoreSize = ScaleSize(22);
+    int scoreWidth = MeasureText(scoreText, scoreSize);
+    DrawText(scoreText, ScaleX(640) - scoreWidth/2, ScaleY(80), scoreSize, colorLight);
+    
     // --- 2. Draw Current Turn Text ---
-    if (!game.gameOver) {
+    if (!game.gameOver)
+    {
         char turnText[64];
-        if (game.mode == MODE_ONE_PLAYER) {
+        if (game.mode == MODE_ONE_PLAYER)
+        {
             sprintf(turnText, game.aiTurn ? "AI's Turn" : "Your Turn");
-        } else { // 2P Mode
+        }
+        else
+        {
             char p1Symbol = game.humanSymbol;
             char p2Symbol = (game.humanSymbol == 'X') ? 'O' : 'X';
             if (game.currentPlayer == p1Symbol)
+            {
                 sprintf(turnText, "Player 1's Turn (%c)", p1Symbol);
-            else
-                sprintf(turnText, "Player 2's Turn (%c)", p2Symbol);
-        }
-
-        int turnWidth = MeasureText(turnText, 28);
-        Color turnColor = game.aiTurn ? colorAccent : colorSecondary;
-        DrawText(turnText, SCREEN_WIDTH/2 - turnWidth/2, 120, 28, turnColor);
-    }
-
-    // --- 3. Draw the Game Board & Pieces ---
-    float boardSize = 360;
-    float boardX = SCREEN_WIDTH/2 - boardSize/2;
-    float boardY = 180;
-    float cellSize = boardSize / 3;
-
-    // Draw grid background
-    DrawRectangleRec((Rectangle){boardX - 10, boardY - 10, boardSize + 20, boardSize + 20}, colorLight);
-
-    // Draw grid lines
-    for (int i = 1; i < 3; i++) {
-        DrawLineEx((Vector2){boardX + i * cellSize, boardY},
-                   (Vector2){boardX + i * cellSize, boardY + boardSize},
-                   5, colorDark);
-        DrawLineEx((Vector2){boardX, boardY + i * cellSize},
-                   (Vector2){boardX + boardSize, boardY + i * cellSize},
-                   5, colorDark);
-    }
-
-    // Draw X's and O's by iterating over the game state
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            float x = boardX + j * cellSize + cellSize/2; // Cell center x
-            float y = boardY + i * cellSize + cellSize/2; // Cell center y
-
-            if (game.board[i][j] == 'X') {
-                float offset = cellSize * 0.25f;
-                DrawLineEx((Vector2){x - offset, y - offset},
-                           (Vector2){x + offset, y + offset}, 8, colorPrimary);
-                DrawLineEx((Vector2){x + offset, y - offset},
-                           (Vector2){x - offset, y + offset}, 8, colorPrimary);
-            } else if (game.board[i][j] == 'O') {
-                DrawRing((Vector2){x, y}, cellSize * 0.25f, cellSize * 0.3f, 0, 360, 32, colorAccent);
             }
-
+            else
+            {
+                sprintf(turnText, "Player 2's Turn (%c)", p2Symbol);
+            }
+        }
+        
+        int turnSize = ScaleSize(28);
+        int turnWidth = MeasureText(turnText, turnSize);
+        Color turnColor = game.aiTurn ? colorAccent : colorSecondary;
+        DrawText(turnText, ScaleX(640) - turnWidth/2, ScaleY(120), turnSize, turnColor);
+    }
+    
+    // --- 3. Draw the Game Board & Pieces ---
+    float boardSize = ScaleSize(360);
+    float boardX = ScaleX(640) - boardSize/2;
+    float boardY = ScaleY(180);
+    float cellSize = boardSize / 3;
+    
+    // Draw grid background
+    DrawRectangleRec(
+        (Rectangle){
+            boardX - ScaleSize(10), 
+            boardY - ScaleSize(10), 
+            boardSize + ScaleSize(20), 
+            boardSize + ScaleSize(20)
+        }, 
+        colorLight
+    );
+    
+    // Draw grid lines
+    for (int i = 1; i < 3; i++)
+    {
+        DrawLineEx(
+            (Vector2){boardX + i * cellSize, boardY},
+            (Vector2){boardX + i * cellSize, boardY + boardSize},
+            ScaleSize(5), 
+            colorDark
+        );
+        DrawLineEx(
+            (Vector2){boardX, boardY + i * cellSize},
+            (Vector2){boardX + boardSize, boardY + i * cellSize},
+            ScaleSize(5), 
+            colorDark
+        );
+    }
+    
+    // Draw X's and O's by iterating over the game state
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            float x = boardX + j * cellSize + cellSize/2;
+            float y = boardY + i * cellSize + cellSize/2;
+            
+            if (game.board[i][j] == 'X')
+            {
+                float offset = cellSize * 0.25f;
+                DrawLineEx(
+                    (Vector2){x - offset, y - offset},
+                    (Vector2){x + offset, y + offset}, 
+                    ScaleSize(8), 
+                    colorPrimary
+                );
+                DrawLineEx(
+                    (Vector2){x + offset, y - offset},
+                    (Vector2){x - offset, y + offset}, 
+                    ScaleSize(8), 
+                    colorPrimary
+                );
+            }
+            else if (game.board[i][j] == 'O')
+            {
+                DrawRing(
+                    (Vector2){x, y}, 
+                    cellSize * 0.25f, 
+                    cellSize * 0.3f, 
+                    0, 
+                    360, 
+                    32, 
+                    colorAccent
+                );
+            }
+            
             // Draw hover effect
-            if (!game.gameOver && !game.aiTurn && game.board[i][j] == ' ') {
-                Rectangle cell = {boardX + j * cellSize, boardY + i * cellSize, cellSize, cellSize};
-                if (CheckCollisionPointRec(GetMousePosition(), cell)) {
-                    DrawRectangle(cell.x, cell.y, cell.width, cell.height, (Color){100, 100, 100, 50});
+            if (!game.gameOver && !game.aiTurn && game.board[i][j] == ' ')
+            {
+                Rectangle cell = {
+                    boardX + j * cellSize, 
+                    boardY + i * cellSize,
+                    cellSize, 
+                    cellSize
+                };
+                if (CheckCollisionPointRec(GetMousePosition(), cell))
+                {
+                    DrawRectangle(
+                        cell.x, 
+                        cell.y, 
+                        cell.width, 
+                        cell.height,
+                        (Color){100, 100, 100, 50}
+                    );
                 }
             }
         }
     }
-
-    // --- NEW: Draw Winning Line ---
-    // This logic checks which line caused the win and draws a thick line over it.
-    if (game.gameOver && game.winner != ' ') {
-        Vector2 startPos = {0};
-        Vector2 endPos = {0};
-        bool lineFound = false;
-
-        // Check Rows
-        for (int i = 0; i < 3; i++) {
+    
+    // --- NEW: Draw Winning Line Highlight ---
+    if (game.gameOver && game.winner != ' ')
+    {
+        Vector2 lineStart = {0};
+        Vector2 lineEnd = {0};
+        bool foundWinningLine = false;
+        
+        // Check rows
+        for (int i = 0; i < 3; i++)
+        {
             if (game.board[i][0] == game.winner && 
                 game.board[i][1] == game.winner && 
-                game.board[i][2] == game.winner) {
-                // Draw horizontal line through the center of the row
-                startPos = (Vector2){boardX, boardY + i * cellSize + cellSize/2};
-                endPos = (Vector2){boardX + boardSize, boardY + i * cellSize + cellSize/2};
-                lineFound = true;
+                game.board[i][2] == game.winner)
+            {
+                lineStart = (Vector2){boardX, boardY + i * cellSize + cellSize/2};
+                lineEnd = (Vector2){boardX + boardSize, boardY + i * cellSize + cellSize/2};
+                foundWinningLine = true;
                 break;
             }
         }
-
-        // Check Columns
-        if (!lineFound) {
-            for (int j = 0; j < 3; j++) {
+        
+        // Check columns
+        if (!foundWinningLine)
+        {
+            for (int j = 0; j < 3; j++)
+            {
                 if (game.board[0][j] == game.winner && 
                     game.board[1][j] == game.winner && 
-                    game.board[2][j] == game.winner) {
-                    // Draw vertical line through the center of the column
-                    startPos = (Vector2){boardX + j * cellSize + cellSize/2, boardY};
-                    endPos = (Vector2){boardX + j * cellSize + cellSize/2, boardY + boardSize};
-                    lineFound = true;
+                    game.board[2][j] == game.winner)
+                {
+                    lineStart = (Vector2){boardX + j * cellSize + cellSize/2, boardY};
+                    lineEnd = (Vector2){boardX + j * cellSize + cellSize/2, boardY + boardSize};
+                    foundWinningLine = true;
                     break;
                 }
             }
         }
-
-        // Check Diagonals
-        if (!lineFound) {
+        
+        // Check diagonals
+        if (!foundWinningLine)
+        {
             if (game.board[0][0] == game.winner && 
                 game.board[1][1] == game.winner && 
-                game.board[2][2] == game.winner) {
-                // Top-left to bottom-right
-                startPos = (Vector2){boardX, boardY};
-                endPos = (Vector2){boardX + boardSize, boardY + boardSize};
-                lineFound = true;
-            } else if (game.board[0][2] == game.winner && 
-                       game.board[1][1] == game.winner && 
-                       game.board[2][0] == game.winner) {
-                // Top-right to bottom-left
-                startPos = (Vector2){boardX + boardSize, boardY};
-                endPos = (Vector2){boardX, boardY + boardSize};
-                lineFound = true;
+                game.board[2][2] == game.winner)
+            {
+                lineStart = (Vector2){boardX, boardY};
+                lineEnd = (Vector2){boardX + boardSize, boardY + boardSize};
+                foundWinningLine = true;
+            }
+            else if (game.board[0][2] == game.winner && 
+                     game.board[1][1] == game.winner && 
+                     game.board[2][0] == game.winner)
+            {
+                lineStart = (Vector2){boardX + boardSize, boardY};
+                lineEnd = (Vector2){boardX, boardY + boardSize};
+                foundWinningLine = true;
             }
         }
-
-        if (lineFound) {
-            // Draw the winning line in a prominent color (using colorWarning for visibility)
-            // You can change 'colorWarning' to 'colorAccent' or any other theme color.
-            DrawLineEx(startPos, endPos, 15, colorWarning); 
+        
+        if (foundWinningLine)
+        {
+            DrawLineEx(lineStart, lineEnd, ScaleSize(15), colorWarning);
         }
     }
-
+    
     // --- 4. Draw Save Message (if timer is active) ---
-    if (game.saveMessageTimer > 0) {
-        int textWidth = MeasureText(game.saveMessage, 20);
+    if (game.saveMessageTimer > 0)
+    {
+        int msgSize = ScaleSize(20);
+        int textWidth = MeasureText(game.saveMessage, msgSize);
         Color msgColor = (strncmp(game.saveMessage, "ERROR", 5) == 0) ? colorAccent : colorSecondary;
-        DrawText(game.saveMessage, SCREEN_WIDTH / 2 - textWidth / 2, 555, 20, msgColor);
+        DrawText(game.saveMessage, ScaleX(640) - textWidth / 2, ScaleY(555), msgSize, msgColor);
     }
-
+    
     // --- 5. Draw Undo Button (conditionally) ---
-    if (game.moveCount > 0) {
-        Rectangle undoButton = CreateButton(SCREEN_WIDTH/2 + 270, 215, 120, 50);
+    if (game.moveCount > 0)
+    {
+        Rectangle undoButton = CreateButton(
+            ScaleX(640 + 270), 
+            ScaleY(215), 
+            ScaleSize(120), 
+            ScaleSize(50)
+        );
         DrawButton(undoButton, "UNDO", colorAccent);
     }
-
+    
     // --- 6. Draw Bottom Buttons ---
-    Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
-    Rectangle saveButton = CreateButton(SCREEN_WIDTH/2, 595, 140, 50);
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 170, 595, 140, 50);
-
+    Rectangle restartButton = CreateButton(
+        ScaleX(640 - 170), 
+        ScaleY(595), 
+        ScaleSize(140), 
+        ScaleSize(50)
+    );
+    Rectangle saveButton = CreateButton(
+        ScaleX(640), 
+        ScaleY(595), 
+        ScaleSize(140), 
+        ScaleSize(50)
+    );
+    Rectangle menuButton = CreateButton(
+        ScaleX(640 + 170), 
+        ScaleY(595), 
+        ScaleSize(140), 
+        ScaleSize(50)
+    );
+    
     DrawButton(restartButton, "RESTART", colorWarning);
     DrawButton(saveButton, "SAVE", colorSecondary);
     DrawButton(menuButton, "MENU", colorDark);
 }
 
-
-/**
- * @brief Handles all logic for the main game screen.
- * * This is the most complex handler. It is responsible for:
- * 1. Counting down the save message timer.
- * 2. Handling clicks on Restart, Undo, Save, and Menu (always).
- * 3. (If game not over) Running the AI move timer and triggering MakeAIMove.
- * 4. (If human turn) Handling clicks on the 3x3 game board.
- * 5. After a move, checking for a win/draw and changing state.
- */
 void HandleGameScreen(void)
 {
     // 1. Update save message timer
     if (game.saveMessageTimer > 0)
     {
-        game.saveMessageTimer -= GetFrameTime(); // GetFrameTime is time since last frame
+        game.saveMessageTimer -= GetFrameTime();
     }
-
-    // 2. Handle Human Button Input (Restart, Undo, Save, Menu)
-    // This logic runs *even if the game is over* so the user can
-    // undo their losing move or restart.
     
-    // Define button rectangles (MUST match DrawGameScreen)
-    // Define button rectangles (MUST match DrawGameScreen)
-    Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
-    Rectangle saveButton    = CreateButton(SCREEN_WIDTH/2, 595, 140, 50);
-    Rectangle menuButton    = CreateButton(SCREEN_WIDTH/2 + 170, 595, 140, 50);
-    Rectangle undoButton    = CreateButton(SCREEN_WIDTH/2 + 270, 215, 120, 50);
-
+    // 2. Handle Human Button Input
+    Rectangle restartButton = CreateButton(ScaleX(640 - 170), ScaleY(595), ScaleSize(140), ScaleSize(50));
+    Rectangle saveButton = CreateButton(ScaleX(640), ScaleY(595), ScaleSize(140), ScaleSize(50));
+    Rectangle menuButton = CreateButton(ScaleX(640 + 170), ScaleY(595), ScaleSize(140), ScaleSize(50));
+    Rectangle undoButton = CreateButton(ScaleX(640 + 270), ScaleY(215), ScaleSize(120), ScaleSize(50));
+    
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         if (IsButtonHovered(restartButton))
         {
-            ResetBoard(); // Just reset the board, keep settings
-            return; // Action taken, end this frame's logic
+            ResetBoard();
+            return;
         }
-        else if (game.moveCount > 0 && IsButtonHovered(undoButton)) // Only check if undo is possible
+        else if (game.moveCount > 0 && IsButtonHovered(undoButton))
         {
-            // --- HANDLE UNDO ---
             if (game.moveCount > 0)
             {
-                game.moveCount--; // Go back to the previous state index
-                
-                // Restore the board and turn info from history
+                game.moveCount--;
                 memcpy(game.board, game.moveHistory[game.moveCount].board, sizeof(game.board));
                 game.currentPlayer = game.moveHistory[game.moveCount].currentPlayer;
                 game.aiTurn = game.moveHistory[game.moveCount].aiTurn;
-                
-                // The game is no longer over
                 game.gameOver = false;
                 game.winner = ' ';
-                
-                // Hide any messages
                 game.saveMessageTimer = 0.0f;
             }
-            return; // Action taken, end this frame's logic
+            return;
         }
         else if (IsButtonHovered(saveButton))
         {
-            SaveGame(); // Save the game, but continue playing
-            return; // Action taken, end this frame's logic
+            SaveGame();
+            return;
         }
         else if (IsButtonHovered(menuButton))
         {
-            game.screen = SCREEN_START; // Go to menu
-            return; // Action taken, end this frame's logic
+            game.screen = SCREEN_START;
+            return;
         }
-        // If no button was clicked, we will proceed to check the game board.
     }
     
-    // 3. Stop all game logic (AI turns, board clicks) if game is over
+    // 3. Stop all game logic if game is over
     if (game.gameOver)
+    {
         return;
+    }
     
     // 4. Handle AI Turn Logic
     if (game.mode == MODE_ONE_PLAYER && game.aiTurn)
     {
-        // This timer adds a small delay before the AI moves.
-        // This makes the AI *feel* more natural, like it's "thinking".
         game.aiMoveTimer -= GetFrameTime();
         if (game.aiMoveTimer <= 0)
         {
-            MakeAIMove();   // AI logic function from game_state.c
-            game.aiTurn = false; // AI turn is over
-            
-            // Check if the AI's move won the game
-        if (CheckWinner() || IsBoardFull())
-        {
-            if (!game.gameOver) // Only append to history on the first frame it's over
+            MakeAIMove();
+            game.aiTurn = false;
+            if (CheckWinner() || IsBoardFull())
             {
-                AppendGameToHistory();
+                if (!game.gameOver)
+                {
+                    AppendGameToHistory();
+                }
+                game.gameOver = true;
+                game.screen = SCREEN_GAME_OVER;
             }
-            game.gameOver = true;
-            game.screen = SCREEN_GAME_OVER; // Go to game over state
         }
-        }
-        return; // IMPORTANT: If it's the AI's turn, skip all human input
+        return;
     }
     
-    // 5. Handle Human Board Clicks (only if no button was pressed)
+    // 5. Handle Human Board Clicks
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        float boardSize = 360;
-        float boardX = SCREEN_WIDTH/2 - boardSize/2;
-        float boardY = 180;
+        float boardSize = ScaleSize(360);
+        float boardX = ScaleX(640) - boardSize/2;
+        float boardY = ScaleY(180);
         float cellSize = boardSize / 3;
-        
         Vector2 mousePos = GetMousePosition();
         
-        // Iterate over the 3x3 grid
         for (int i = 0; i < 3; i++)
         {
             for (int j = 0; j < 3; j++)
             {
-                Rectangle cell = {boardX + j * cellSize, boardY + i * cellSize,
-                                 cellSize, cellSize};
+                Rectangle cell = {
+                    boardX + j * cellSize, 
+                    boardY + i * cellSize,
+                    cellSize, 
+                    cellSize
+                };
                 
-                // Check if mouse clicked this cell AND if it's empty
                 if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
                 {
-                    // --- SAVE STATE FOR UNDO ---
-                    // We only save right before a human move is made.
-                    // This works for both 1P (undoes human+AI) and 2P (undoes last move).
-                    if (game.moveCount < 9) 
+                    // Save state for undo
+                    if (game.moveCount < 9)
                     {
                         memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
                         game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
                         game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
                         game.moveCount++;
                     }
-                    // --- END SAVE STATE ---
-
+                    
                     // Place the current player's symbol
                     game.board[i][j] = game.currentPlayer;
                     
-                    // 6. Check for Win/Draw
+                    // Check for Win/Draw
                     if (CheckWinner() || IsBoardFull())
                     {
-                        if (!game.gameOver) // Only append to history on the first frame it's over
+                        if (!game.gameOver)
                         {
                             AppendGameToHistory();
                         }
                         game.gameOver = true;
                         game.screen = SCREEN_GAME_OVER;
-                        return; // Game over, stop processing
+                        return;
                     }
                     
-                    // 7. Switch Turns
+                    // Switch Turns
                     if (game.mode == MODE_ONE_PLAYER)
                     {
-                        game.aiTurn = true; // Set to AI's turn
-                        game.aiMoveTimer = 0.5f; // Reset AI "thinking" timer
+                        game.aiTurn = true;
+                        game.aiMoveTimer = 0.5f;
                     }
-                    else // 2P mode
+                    else
                     {
                         game.currentPlayer = (game.currentPlayer == 'X') ? 'O' : 'X';
                     }
-                    break; // Move was made, stop checking cells
+                    break;
                 }
             }
         }
@@ -714,35 +789,34 @@ void HandleGameScreen(void)
 // ============================================================================
 // GAME OVER SCREEN
 // ============================================================================
-
-/**
- * @brief Draws the game over panel.
- * * This function is designed to be drawn *on top of* `DrawGameScreen`.
- * It creates a semi-transparent panel that sits near the top of the
- * screen, displaying the result and the final scores.
- */
 void DrawGameOverScreen(void)
 {
     // Draw semi-transparent panel at TOP of screen
-    float panelWidth = 500;
-    float panelHeight = 200;
-    float panelX = SCREEN_WIDTH/2 - panelWidth/2;
-    float panelY = 20;  // Near top, not center
+    float panelWidth = ScaleSize(500);
+    float panelHeight = ScaleSize(200);
+    float panelX = ScaleX(640) - panelWidth/2;
+    float panelY = ScaleY(20);
     
-    // Semi-transparent background
-    DrawRectangleRec((Rectangle){panelX, panelY, panelWidth, panelHeight}, (Color){44, 62, 80, 230});
-    DrawRectangleLinesEx((Rectangle){panelX, panelY, panelWidth, panelHeight}, 4, colorPrimary);
+    DrawRectangleRec(
+        (Rectangle){panelX, panelY, panelWidth, panelHeight}, 
+        (Color){44, 62, 80, 230}
+    );
+    DrawRectangleLinesEx(
+        (Rectangle){panelX, panelY, panelWidth, panelHeight}, 
+        ScaleSize(4), 
+        colorPrimary
+    );
     
-    // --- 1. Result text ---
+    // Result text
     const char* resultText;
     Color resultColor;
     
-    if (game.winner == ' ') // Draw
+    if (game.winner == ' ')
     {
         resultText = "IT'S A DRAW!";
         resultColor = colorWarning;
     }
-    else if (game.mode == MODE_ONE_PLAYER) // 1P Mode
+    else if (game.mode == MODE_ONE_PLAYER)
     {
         if (game.winner == game.humanSymbol)
         {
@@ -755,71 +829,85 @@ void DrawGameOverScreen(void)
             resultColor = colorAccent;
         }
     }
-    else // 2P Mode
-{
-    char p1Symbol = game.humanSymbol; // Player 1's chosen symbol
-
-    if (game.winner == p1Symbol)
-    {
-        // Player 1 wins
-        resultText = (p1Symbol == 'X') ? "PLAYER 1 (X) WINS!" : "PLAYER 1 (O) WINS!";
-        resultColor = colorSecondary;
-    }
     else
     {
-        // Player 2 wins
-        resultText = (p1Symbol == 'X') ? "PLAYER 2 (O) WINS!" : "PLAYER 2 (X) WINS!";
-        resultColor = colorSecondary;
+        char p1Symbol = game.humanSymbol;
+        if (game.winner == p1Symbol)
+        {
+            resultText = (p1Symbol == 'X') ? "PLAYER 1 (X) WINS!" : "PLAYER 1 (O) WINS!";
+            resultColor = colorSecondary;
+        }
+        else
+        {
+            resultText = (p1Symbol == 'X') ? "PLAYER 2 (O) WINS!" : "PLAYER 2 (X) WINS!";
+            resultColor = colorSecondary;
+        }
     }
-}
     
-    int resultWidth = MeasureText(resultText, 45);
-    DrawText(resultText, SCREEN_WIDTH/2 - resultWidth/2, panelY + 30, 45, resultColor);
+    int resultSize = ScaleSize(45);
+    int resultWidth = MeasureText(resultText, resultSize);
+    DrawText(resultText, ScaleX(640) - resultWidth/2, panelY + ScaleSize(30), resultSize, resultColor);
     
-    // --- 2. Score display ---
+    // Score display
     char scoreText[128];
     if (game.mode == MODE_ONE_PLAYER)
+    {
         sprintf(scoreText, "You: %d | AI: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
+    }
     else
+    {
         sprintf(scoreText, "P1: %d | P2: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
+    }
     
-    int scoreWidth = MeasureText(scoreText, 18);
-    DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, panelY + 90, 18, colorLight);
+    int scoreSize = ScaleSize(18);
+    int scoreWidth = MeasureText(scoreText, scoreSize);
+    DrawText(scoreText, ScaleX(640) - scoreWidth/2, panelY + ScaleSize(90), scoreSize, colorLight);
     
-    // --- 3. Buttons ---
-    Rectangle playAgainButton = CreateButton(SCREEN_WIDTH/2 - 130, panelY + 150, 220, 45);
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 130, panelY + 150, 220, 45);
+    // Buttons
+    Rectangle playAgainButton = CreateButton(
+        ScaleX(640 - 130), 
+        panelY + ScaleSize(150), 
+        ScaleSize(220), 
+        ScaleSize(45)
+    );
+    Rectangle menuButton = CreateButton(
+        ScaleX(640 + 130), 
+        panelY + ScaleSize(150), 
+        ScaleSize(220), 
+        ScaleSize(45)
+    );
     
     DrawButton(playAgainButton, "PLAY AGAIN", colorSecondary);
     DrawButton(menuButton, "MAIN MENU", colorDark);
 }
 
-/**
- * @brief Handles input for the game over panel.
- * * This function only runs when `game.screen == SCREEN_GAME_OVER`.
- * It checks for clicks on "Play Again" or "Main Menu".
- * Note: `HandleGameScreen` is *not* running at this time.
- */
 void HandleGameOverScreen(void)
 {
-    float panelY = 20;  // Must match the Y pos from DrawGameOverScreen
-    
-    Rectangle playAgainButton = CreateButton(SCREEN_WIDTH/2 - 130, panelY + 150, 220, 45);
-    Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 130, panelY + 150, 220, 45);
+    float panelY = ScaleY(20);
+    Rectangle playAgainButton = CreateButton(
+        ScaleX(640 - 130), 
+        panelY + ScaleSize(150), 
+        ScaleSize(220), 
+        ScaleSize(45)
+    );
+    Rectangle menuButton = CreateButton(
+        ScaleX(640 + 130), 
+        panelY + ScaleSize(150), 
+        ScaleSize(220), 
+        ScaleSize(45)
+    );
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         if (IsButtonHovered(playAgainButton))
         {
-            // Play Again: Just reset the board and go back to game screen
             ResetBoard();
             game.screen = SCREEN_GAME;
         }
         else if (IsButtonHovered(menuButton))
         {
-            // Main Menu: Go to start screen AND reset all stats
             game.screen = SCREEN_START;
             game.player1Wins = 0;
             game.player2Wins = 0;
@@ -831,53 +919,43 @@ void HandleGameOverScreen(void)
 // ============================================================================
 // THEME SELECT SCREEN
 // ============================================================================
-
 void DrawThemeSelectScreen(void)
 {
     const char* title = "SELECT THEME";
-    int titleWidth = MeasureText(title, 60);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 60, 60, colorPrimary);
-
-    // Define buttons
-    Rectangle defaultButton = CreateButton(SCREEN_WIDTH/2, 150, 280, 60);
-    Rectangle darkButton = CreateButton(SCREEN_WIDTH/2, 220, 280, 60);
-    Rectangle forestButton = CreateButton(SCREEN_WIDTH/2, 290, 280, 60);
-    Rectangle spaceButton = CreateButton(SCREEN_WIDTH/2, 360, 280, 60);
-    Rectangle aquaticButton = CreateButton(SCREEN_WIDTH/2, 430, 280, 60);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 520, 200, 60);
-
-    // Draw buttons
+    int titleSize = ScaleSize(60);
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(60), titleSize, colorPrimary);
+    
+    Rectangle defaultButton = CreateButton(ScaleX(640), ScaleY(150), ScaleSize(280), ScaleSize(60));
+    Rectangle darkButton = CreateButton(ScaleX(640), ScaleY(220), ScaleSize(280), ScaleSize(60));
+    Rectangle forestButton = CreateButton(ScaleX(640), ScaleY(290), ScaleSize(280), ScaleSize(60));
+    Rectangle spaceButton = CreateButton(ScaleX(640), ScaleY(360), ScaleSize(280), ScaleSize(60));
+    Rectangle aquaticButton = CreateButton(ScaleX(640), ScaleY(430), ScaleSize(280), ScaleSize(60));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(520), ScaleSize(200), ScaleSize(60));
+    
     DrawButton(defaultButton, "DEFAULT", colorSecondary);
     DrawButton(darkButton, "DARK", colorSecondary);
     DrawButton(forestButton, "FOREST", colorSecondary);
     DrawButton(spaceButton, "SPACE", colorSecondary);
     DrawButton(aquaticButton, "AQUATIC", colorSecondary);
     DrawButton(backButton, "BACK", colorDark);
-
-    // Add a highlight rectangle to the *currently selected* theme
-    // This provides clear visual feedback to the user.
-    if (game.currentTheme == THEME_DEFAULT) DrawRectangleLinesEx(defaultButton, 5, colorAccent);
-    if (game.currentTheme == THEME_DARK) DrawRectangleLinesEx(darkButton, 5, colorAccent);
-    if (game.currentTheme == THEME_FOREST) DrawRectangleLinesEx(forestButton, 5, colorAccent);
-    if (game.currentTheme == THEME_SPACE) DrawRectangleLinesEx(spaceButton, 5, colorAccent);
-    if (game.currentTheme == THEME_AQUATIC) DrawRectangleLinesEx(aquaticButton, 5, colorAccent);
+    
+    if (game.currentTheme == THEME_DEFAULT) DrawRectangleLinesEx(defaultButton, ScaleSize(5), colorAccent);
+    if (game.currentTheme == THEME_DARK) DrawRectangleLinesEx(darkButton, ScaleSize(5), colorAccent);
+    if (game.currentTheme == THEME_FOREST) DrawRectangleLinesEx(forestButton, ScaleSize(5), colorAccent);
+    if (game.currentTheme == THEME_SPACE) DrawRectangleLinesEx(spaceButton, ScaleSize(5), colorAccent);
+    if (game.currentTheme == THEME_AQUATIC) DrawRectangleLinesEx(aquaticButton, ScaleSize(5), colorAccent);
 }
 
-/**
- * @brief Handles clicks on the theme selection buttons.
- * * When a theme button is clicked, this function calls `ChangeTheme()`.
- * `ChangeTheme` instantly updates the global color variables,
- * so the UI will update to the new colors on the very next frame.
- */
 void HandleThemeSelectScreen(void)
 {
-    Rectangle defaultButton = CreateButton(SCREEN_WIDTH/2, 150, 280, 60);
-    Rectangle darkButton = CreateButton(SCREEN_WIDTH/2, 220, 280, 60);
-    Rectangle forestButton = CreateButton(SCREEN_WIDTH/2, 290, 280, 60);
-    Rectangle spaceButton = CreateButton(SCREEN_WIDTH/2, 360, 280, 60);
-    Rectangle aquaticButton = CreateButton(SCREEN_WIDTH/2, 430, 280, 60);
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 520, 200, 60);
-
+    Rectangle defaultButton = CreateButton(ScaleX(640), ScaleY(150), ScaleSize(280), ScaleSize(60));
+    Rectangle darkButton = CreateButton(ScaleX(640), ScaleY(220), ScaleSize(280), ScaleSize(60));
+    Rectangle forestButton = CreateButton(ScaleX(640), ScaleY(290), ScaleSize(280), ScaleSize(60));
+    Rectangle spaceButton = CreateButton(ScaleX(640), ScaleY(360), ScaleSize(280), ScaleSize(60));
+    Rectangle aquaticButton = CreateButton(ScaleX(640), ScaleY(430), ScaleSize(280), ScaleSize(60));
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(520), ScaleSize(200), ScaleSize(60));
+    
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         if (IsButtonHovered(defaultButton))
@@ -902,7 +980,7 @@ void HandleThemeSelectScreen(void)
         }
         else if (IsButtonHovered(backButton))
         {
-            game.screen = SCREEN_START; // Go back to start menu
+            game.screen = SCREEN_START;
         }
     }
 }
@@ -910,71 +988,112 @@ void HandleThemeSelectScreen(void)
 // ============================================================================
 // HISTORY SCREEN
 // ============================================================================
-
 void DrawHistoryScreen(void)
 {
     const char* title = "GAME HISTORY";
-    int titleWidth = MeasureText(title, 60);
-    DrawText(title, SCREEN_WIDTH/2 - titleWidth/2, 50, 60, colorPrimary);
-
-    // Draw the instruction box
-    float boxWidth = 700;
-    float boxHeight = 450;
-    float boxX = (SCREEN_WIDTH / 2) - (boxWidth / 2);
-    float boxY = 130;
-    float textX = boxX + 20;
-
+    int titleSize = ScaleSize(60);
+    int titleWidth = MeasureText(title, titleSize);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(50), titleSize, colorPrimary);
+    
+    // Define the History Box
+    float boxWidth = ScaleSize(700);
+    float boxHeight = ScaleSize(450);
+    float boxX = ScaleX(640) - boxWidth/2;
+    float boxY = ScaleY(130);
+    
     DrawRectangleRec((Rectangle){boxX, boxY, boxWidth, boxHeight}, colorLight);
-    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, 3, colorPrimary);
-
+    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, ScaleSize(3), colorPrimary);
+    
     if (game.historyLineCount == 0)
     {
-        // Show message if no history
         const char* msg = "No game history found. Go play a game!";
-        int msgWidth = MeasureText(msg, 24);
-        DrawText(msg, SCREEN_WIDTH/2 - msgWidth/2, 300, 24, colorDark);
+        int msgSize = ScaleSize(24);
+        int msgWidth = MeasureText(msg, msgSize);
+        DrawText(msg, ScaleX(640) - msgWidth/2, ScaleY(300), msgSize, colorDark);
     }
     else
     {
-        // Display each line of history
-        int yPos = boxY + 15; // Start text Y-position
-        for (int i = 0; i < game.historyLineCount; i++)
+        // --- SCROLLING LOGIC ---
+        int textSize = ScaleSize(20);
+        int lineHeight = ScaleSize(25);
+        int padding = ScaleSize(15);
+        
+        // Calculate how many lines fit in the box
+        int maxVisibleLines = (boxHeight - (padding * 2)) / lineHeight;
+        
+        // Clamp the scroll offset to valid bounds (0 to max_scroll)
+        int maxScroll = game.historyLineCount - maxVisibleLines;
+        if (maxScroll < 0) maxScroll = 0;
+        
+        if (game.historyScrollOffset < 0) game.historyScrollOffset = 0;
+        if (game.historyScrollOffset > maxScroll) game.historyScrollOffset = maxScroll;
+
+        // Draw visible lines
+        float textX = boxX + padding;
+        float textY = boxY + padding;
+        
+        for (int i = 0; i < maxVisibleLines; i++)
         {
-            DrawText(game.gameHistory[i], textX, yPos, 20, colorDark);
-            yPos += 22; // Move down for the next line
+            int lineIndex = game.historyScrollOffset + i;
+            if (lineIndex >= game.historyLineCount) break;
+            
+            DrawText(game.gameHistory[lineIndex], textX, textY + (i * lineHeight), textSize, colorDark);
+        }
+        
+        // Draw Scrollbar (Visual Feedback)
+        if (game.historyLineCount > maxVisibleLines) {
+            float scrollbarWidth = ScaleSize(10);
+            float scrollbarHeight = boxHeight * ((float)maxVisibleLines / game.historyLineCount);
+            float scrollbarX = boxX + boxWidth - scrollbarWidth - ScaleSize(5);
+            
+            // Calculate scrollbar Y position based on percentage scrolled
+            float scrollPercent = (float)game.historyScrollOffset / maxScroll;
+            float scrollbarY = boxY + (scrollPercent * (boxHeight - scrollbarHeight));
+            
+            DrawRectangle(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight, colorAccent);
         }
     }
-
-   // --- Draw Buttons ---
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 620, 200, 50);
+    
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(620), ScaleSize(200), ScaleSize(50));
     DrawButton(backButton, "BACK", colorPrimary);
-
-    // Only draw the "CLEAR" button if there is history to clear
+    
     if (game.historyLineCount > 0)
     {
-        Rectangle clearButton = CreateButton(SCREEN_WIDTH/2 + 245, 160, 200, 50);
-        DrawButton(clearButton, "CLEAR", colorAccent); // Use Accent color
+        Rectangle clearButton = CreateButton(ScaleX(640 + 245), ScaleY(160), ScaleSize(200), ScaleSize(50));
+        DrawButton(clearButton, "CLEAR", colorAccent);
     }
 }
 
 void HandleHistoryScreen(void)
 {
-    // Define rectangles for both buttons
-    Rectangle backButton = CreateButton(SCREEN_WIDTH/2, 620, 200, 50);
-    Rectangle clearButton = CreateButton(SCREEN_WIDTH/2 + 245, 160, 200, 50);
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(620), ScaleSize(200), ScaleSize(50));
+    Rectangle clearButton = CreateButton(ScaleX(640 + 245), ScaleY(160), ScaleSize(200), ScaleSize(50));
     
+    // Handle Button Clicks
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         if (IsButtonHovered(backButton))
         {
-            game.screen = SCREEN_START; // Go back to menu
+            game.screen = SCREEN_START;
+            game.historyScrollOffset = 0; // Reset scroll when leaving
         }
-        // Only check the clear button if history exists (matches the draw logic)
         else if (game.historyLineCount > 0 && IsButtonHovered(clearButton))
         {
             ClearGameHistory();
-            // The screen will automatically update on the next frame
-            // to show "No game history found."
+            game.historyScrollOffset = 0;
         }
     }
+    
+    // Handle Mouse Wheel Scrolling
+    float wheelMove = GetMouseWheelMove();
+    if (wheelMove != 0)
+    {
+        // Scroll speed: 1 line per wheel click (invert because wheel up is positive)
+        game.historyScrollOffset -= (int)wheelMove;
+        
+        // Note: Clamping happens in Draw function to keep logic simple, 
+        // but we can also clamp here for strict correctness.
+        if (game.historyScrollOffset < 0) game.historyScrollOffset = 0;
+    }
 }
+
