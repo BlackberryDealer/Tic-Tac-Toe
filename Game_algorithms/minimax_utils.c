@@ -96,3 +96,31 @@ int countBits(int mask) {
     }
     return count;
 }
+
+void getPlayerMasks(int maskX, int maskO, char aiSymbol, int *aiMask, int *oppMask) {
+    int countX = countBits(maskX);
+    int countO = countBits(maskO);
+
+    if (countX == 0 && countO == 0) {
+        // Empty board - use the provided aiSymbol
+        if (aiSymbol == 'X') {
+            *aiMask = maskX;    // AI plays X
+            *oppMask = maskO;   // Opponent plays O
+        } else {
+            *aiMask = maskO;    // AI plays O
+            *oppMask = maskX;   // Opponent plays X
+        }
+    } else {
+        // Board has pieces - determine from counts
+        // The player with fewer (or equal) pieces goes next
+        if (countX <= countO) {
+            // X's turn (X has fewer or equal pieces)
+            *aiMask = maskX;
+            *oppMask = maskO;
+        } else {
+            // O's turn (O has fewer pieces)
+            *aiMask = maskO;
+            *oppMask = maskX;
+        }
+    }
+}

@@ -107,37 +107,13 @@ static int minimax_masks(int playerMask, int oppMask, int depth,
  * - Return the best-scoring move or {-1,-1} if none
  */
 struct Move findBestMoveImperfect(char board[3][3], char aiSymbol) {
+    // Step 1: Convert board to bitmasks
     int maskX = 0, maskO = 0;
     boardToMasks(board, &maskX, &maskO);
 
-    // Determine which player is the AI
-    // Count pieces to figure out whose turn it is
-    int countX = countBits(maskX);
-    int countO = countBits(maskO);
-
+    // Step 2: Use shared util to determine AI/Opponent masks
     int aiMask, oppMask;
-    if (countX == 0 && countO == 0) {
-        // Empty board - use the provided aiSymbol
-        if (aiSymbol == 'X') {
-            aiMask = maskX;    // AI plays X
-            oppMask = maskO;   // Opponent plays O
-        } else {
-            aiMask = maskO;    // AI plays O
-            oppMask = maskX;   // Opponent plays X
-        }
-    } else {
-        // Board has pieces - determine from counts
-        // The player with fewer (or equal) pieces goes next
-        if (countX <= countO) {
-            // X's turn (X has fewer or equal pieces)
-            aiMask = maskX;
-            oppMask = maskO;
-        } else {
-            // O's turn (O has fewer pieces)
-            aiMask = maskO;
-            oppMask = maskX;
-        }
-    }
+    getPlayerMasks(maskX, maskO, aiSymbol, &aiMask, &oppMask);
 
     int occupied = aiMask | oppMask;
     struct Move bestMove = { -1, -1 };

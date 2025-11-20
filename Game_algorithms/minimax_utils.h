@@ -2,6 +2,7 @@
  * @file minimax_utils.h
  * @brief Shared bitboard utilities for minimax AIs
  */
+
 #ifndef MINIMAX_UTILS_H
 #define MINIMAX_UTILS_H
 
@@ -21,5 +22,16 @@ bool isWinnerMask(int mask);
 
 // Count number of set bits in mask
 int countBits(int mask);
+
+/**
+ * @brief Determines the AI and Opponent bitmasks based on the current board state.
+ * 
+ * @param maskX Bitmask of X pieces
+ * @param maskO Bitmask of O pieces
+ * @param aiSymbol The symbol the AI is playing ('X' or 'O')
+ * @param aiMask Pointer to store the resulting AI bitmask
+ * @param oppMask Pointer to store the resulting Opponent bitmask
+ */
+void getPlayerMasks(int maskX, int maskO, char aiSymbol, int *aiMask, int *oppMask);
 
 #endif // MINIMAX_UTILS_H
