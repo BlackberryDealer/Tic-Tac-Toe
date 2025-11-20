@@ -371,78 +371,64 @@ void HandleInstructionsScreen(void)
 // ============================================================================
 // GAME SCREEN
 // ============================================================================
-
 /**
- * @brief Draws the main game screen (scores, board, buttons).
- * * This is one of the most complex draw functions as it has to
- * reflect many different states:
- * - Current turn (Human vs. AI, P1 vs. P2)
- * - The `game.board[3][3]` array (drawing X's and O's)
- * - The hover effect over empty cells
- * - The "Game Saved!" message
- */
+* @brief Draws the main game screen (scores, board, buttons).
+* * This is one of the most complex draw functions as it has to
+* reflect many different states:
+* - Current turn (Human vs. AI, P1 vs. P2)
+* - The `game.board[3][3]` array (drawing X's and O's)
+* - The hover effect over empty cells
+* - The "Game Saved!" message
+* - NEW: The winning line highlight
+*/
 void DrawGameScreen(void)
 {
     // --- 1. Draw Header & Scores ---
     const char* header = (game.mode == MODE_ONE_PLAYER) ? "YOU vs AI" : "PLAYER 1 vs PLAYER 2";
     int headerWidth = MeasureText(header, 40);
     DrawText(header, SCREEN_WIDTH/2 - headerWidth/2, 30, 40, colorPrimary);
-    
+
     char scoreText[64];
     if (game.mode == MODE_ONE_PLAYER)
-        sprintf(scoreText, "You: %d  |  AI: %d  |  Draws: %d", 
+        sprintf(scoreText, "You: %d | AI: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
     else
-        sprintf(scoreText, "P1: %d  |  P2: %d  |  Draws: %d", 
+        sprintf(scoreText, "P1: %d | P2: %d | Draws: %d",
                 game.player1Wins, game.player2Wins, game.draws);
-    
+
     int scoreWidth = MeasureText(scoreText, 22);
     DrawText(scoreText, SCREEN_WIDTH/2 - scoreWidth/2, 80, 22, colorLight);
-    
+
     // --- 2. Draw Current Turn Text ---
-if (!game.gameOver)
-{
-    char turnText[64]; // Changed to a char array to support sprintf
-
-    if (game.mode == MODE_ONE_PLAYER)
-    {
-        sprintf(turnText, game.aiTurn ? "AI's Turn" : "Your Turn");
-    }
-    else // 2P Mode
-    {
-        // This is the new logic.
-        // 'game.humanSymbol' stores Player 1's choice.
-        char p1Symbol = game.humanSymbol;
-        char p2Symbol = (game.humanSymbol == 'X') ? 'O' : 'X';
-
-        if (game.currentPlayer == p1Symbol)
-        {
-            sprintf(turnText, "Player 1's Turn (%c)", p1Symbol);
+    if (!game.gameOver) {
+        char turnText[64];
+        if (game.mode == MODE_ONE_PLAYER) {
+            sprintf(turnText, game.aiTurn ? "AI's Turn" : "Your Turn");
+        } else { // 2P Mode
+            char p1Symbol = game.humanSymbol;
+            char p2Symbol = (game.humanSymbol == 'X') ? 'O' : 'X';
+            if (game.currentPlayer == p1Symbol)
+                sprintf(turnText, "Player 1's Turn (%c)", p1Symbol);
+            else
+                sprintf(turnText, "Player 2's Turn (%c)", p2Symbol);
         }
-        else
-        {
-            sprintf(turnText, "Player 2's Turn (%c)", p2Symbol);
-        }
+
+        int turnWidth = MeasureText(turnText, 28);
+        Color turnColor = game.aiTurn ? colorAccent : colorSecondary;
+        DrawText(turnText, SCREEN_WIDTH/2 - turnWidth/2, 120, 28, turnColor);
     }
 
-    int turnWidth = MeasureText(turnText, 28);
-    // Use a different color if it's the AI's turn
-    Color turnColor = game.aiTurn ? colorAccent : colorSecondary;
-    DrawText(turnText, SCREEN_WIDTH/2 - turnWidth/2, 120, 28, turnColor);
-}
-    
     // --- 3. Draw the Game Board & Pieces ---
     float boardSize = 360;
     float boardX = SCREEN_WIDTH/2 - boardSize/2;
     float boardY = 180;
     float cellSize = boardSize / 3;
-    
+
     // Draw grid background
     DrawRectangleRec((Rectangle){boardX - 10, boardY - 10, boardSize + 20, boardSize + 20}, colorLight);
-    
+
     // Draw grid lines
-    for (int i = 1; i < 3; i++)
-    {
+    for (int i = 1; i < 3; i++) {
         DrawLineEx((Vector2){boardX + i * cellSize, boardY},
                    (Vector2){boardX + i * cellSize, boardY + boardSize},
                    5, colorDark);
@@ -450,72 +436,117 @@ if (!game.gameOver)
                    (Vector2){boardX + boardSize, boardY + i * cellSize},
                    5, colorDark);
     }
-    
+
     // Draw X's and O's by iterating over the game state
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
             float x = boardX + j * cellSize + cellSize/2; // Cell center x
             float y = boardY + i * cellSize + cellSize/2; // Cell center y
-            
-            if (game.board[i][j] == 'X')
-            {
-                float offset = cellSize * 0.25f; // Size of the X
+
+            if (game.board[i][j] == 'X') {
+                float offset = cellSize * 0.25f;
                 DrawLineEx((Vector2){x - offset, y - offset},
                            (Vector2){x + offset, y + offset}, 8, colorPrimary);
                 DrawLineEx((Vector2){x + offset, y - offset},
                            (Vector2){x - offset, y + offset}, 8, colorPrimary);
-            }
-            else if (game.board[i][j] == 'O')
-            {
+            } else if (game.board[i][j] == 'O') {
                 DrawRing((Vector2){x, y}, cellSize * 0.25f, cellSize * 0.3f, 0, 360, 32, colorAccent);
             }
-            
+
             // Draw hover effect
-            // Show only if game is not over, it's not the AI's turn,
-            // and the cell is empty.
-            if (!game.gameOver && !game.aiTurn && game.board[i][j] == ' ')
-            {
-                Rectangle cell = {boardX + j * cellSize, boardY + i * cellSize, 
-                                 cellSize, cellSize};
-                if (CheckCollisionPointRec(GetMousePosition(), cell))
-                {
-                    // Draw semi-transparent gray box
-                    DrawRectangle(cell.x, cell.y, cell.width, cell.height, 
-                                 (Color){100, 100, 100, 50});
+            if (!game.gameOver && !game.aiTurn && game.board[i][j] == ' ') {
+                Rectangle cell = {boardX + j * cellSize, boardY + i * cellSize, cellSize, cellSize};
+                if (CheckCollisionPointRec(GetMousePosition(), cell)) {
+                    DrawRectangle(cell.x, cell.y, cell.width, cell.height, (Color){100, 100, 100, 50});
                 }
             }
         }
     }
-    
+
+    // --- NEW: Draw Winning Line ---
+    // This logic checks which line caused the win and draws a thick line over it.
+    if (game.gameOver && game.winner != ' ') {
+        Vector2 startPos = {0};
+        Vector2 endPos = {0};
+        bool lineFound = false;
+
+        // Check Rows
+        for (int i = 0; i < 3; i++) {
+            if (game.board[i][0] == game.winner && 
+                game.board[i][1] == game.winner && 
+                game.board[i][2] == game.winner) {
+                // Draw horizontal line through the center of the row
+                startPos = (Vector2){boardX, boardY + i * cellSize + cellSize/2};
+                endPos = (Vector2){boardX + boardSize, boardY + i * cellSize + cellSize/2};
+                lineFound = true;
+                break;
+            }
+        }
+
+        // Check Columns
+        if (!lineFound) {
+            for (int j = 0; j < 3; j++) {
+                if (game.board[0][j] == game.winner && 
+                    game.board[1][j] == game.winner && 
+                    game.board[2][j] == game.winner) {
+                    // Draw vertical line through the center of the column
+                    startPos = (Vector2){boardX + j * cellSize + cellSize/2, boardY};
+                    endPos = (Vector2){boardX + j * cellSize + cellSize/2, boardY + boardSize};
+                    lineFound = true;
+                    break;
+                }
+            }
+        }
+
+        // Check Diagonals
+        if (!lineFound) {
+            if (game.board[0][0] == game.winner && 
+                game.board[1][1] == game.winner && 
+                game.board[2][2] == game.winner) {
+                // Top-left to bottom-right
+                startPos = (Vector2){boardX, boardY};
+                endPos = (Vector2){boardX + boardSize, boardY + boardSize};
+                lineFound = true;
+            } else if (game.board[0][2] == game.winner && 
+                       game.board[1][1] == game.winner && 
+                       game.board[2][0] == game.winner) {
+                // Top-right to bottom-left
+                startPos = (Vector2){boardX + boardSize, boardY};
+                endPos = (Vector2){boardX, boardY + boardSize};
+                lineFound = true;
+            }
+        }
+
+        if (lineFound) {
+            // Draw the winning line in a prominent color (using colorWarning for visibility)
+            // You can change 'colorWarning' to 'colorAccent' or any other theme color.
+            DrawLineEx(startPos, endPos, 15, colorWarning); 
+        }
+    }
+
     // --- 4. Draw Save Message (if timer is active) ---
-    if (game.saveMessageTimer > 0)
-    {
+    if (game.saveMessageTimer > 0) {
         int textWidth = MeasureText(game.saveMessage, 20);
-        // Show "ERROR" in red (colorAccent), "Saved!" in green (colorSecondary)
         Color msgColor = (strncmp(game.saveMessage, "ERROR", 5) == 0) ? colorAccent : colorSecondary;
         DrawText(game.saveMessage, SCREEN_WIDTH / 2 - textWidth / 2, 555, 20, msgColor);
     }
 
     // --- 5. Draw Undo Button (conditionally) ---
-    // Only draw the button if there is a move to undo
-    if (game.moveCount > 0)
-    {
-        // Positioned above the grid, on the right side
+    if (game.moveCount > 0) {
         Rectangle undoButton = CreateButton(SCREEN_WIDTH/2 + 270, 215, 120, 50);
         DrawButton(undoButton, "UNDO", colorAccent);
     }
-    
-    // --- 5. Draw Bottom Buttons ---
+
+    // --- 6. Draw Bottom Buttons ---
     Rectangle restartButton = CreateButton(SCREEN_WIDTH/2 - 170, 595, 140, 50);
     Rectangle saveButton = CreateButton(SCREEN_WIDTH/2, 595, 140, 50);
     Rectangle menuButton = CreateButton(SCREEN_WIDTH/2 + 170, 595, 140, 50);
-    
+
     DrawButton(restartButton, "RESTART", colorWarning);
     DrawButton(saveButton, "SAVE", colorSecondary);
     DrawButton(menuButton, "MENU", colorDark);
 }
+
 
 /**
  * @brief Handles all logic for the main game screen.
