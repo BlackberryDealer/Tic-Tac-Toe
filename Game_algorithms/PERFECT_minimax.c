@@ -60,9 +60,6 @@
 // CONSTANTS AND STATIC VARIABLES
 // ============================================================================
 
-/* Player symbols (legacy from char-based version, kept for API compatibility) */
-static char player = 'X';
-static char opponent = 'O';
 
 /**
  * @brief Precomputed winning line bit masks

@@ -6,7 +6,7 @@
  */
 
 #include "game_state.h"
-#include "../Team_B/minimax.h" // For AI move functions
+#include "../Game_algorithms/minimax.h" // For AI move functions
 #include <stdio.h> // For file I/O (fopen, fwrite, fread, fclose)
 #include <string.h> // For sprintf
 
@@ -294,7 +294,7 @@ void MakeAIMove(void)
         bestMove = findBestMovePerfect(game.board, game.aiSymbol);
     } else if (game.difficulty == DIFF_MEDIUM) {
         // Imperfect AI - makes mistakes, depth-limited minimax
-        bestMove = findBestMoveImperfect(game.board);
+        bestMove = findBestMoveImperfect(game.board, game.aiSymbol);
     } else {  // DIFF_EASY
         // Model-based AI - uses logistic regression evaluation
         bestMove = findBestMoveModel(game.board);

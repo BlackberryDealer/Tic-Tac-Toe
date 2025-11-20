@@ -14,7 +14,7 @@
 #include <stdio.h>      // For sprintf (in DrawGameScreen)
 #include "game_state.h" // Access to the global 'game' state and colors
 #include "ui.h"         // For button helper functions
-#include "../Team_B/minimax.h" // Access to AI functions (MakeAIMove)
+#include "../Game_algorithms/minimax.h" // Access to AI functions (MakeAIMove)
 #include <string.h>     // For strncmp (in DrawGameScreen)
 
 // ============================================================================
