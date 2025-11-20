@@ -58,62 +58,6 @@
 #include "minimax_utils.h"
 
 // ============================================================================
-// CONSTANTS AND STATIC VARIABLES
-// ============================================================================
-
-
-/**
- * @brief Precomputed winning line bit masks
- * 
- * BITBOARD LAYOUT:
- *   Board positions:    Bit indices:
- *     0 | 1 | 2           bit0 | bit1 | bit2
- *    -----------          --------------------
- *     3 | 4 | 5           bit3 | bit4 | bit5
- *    -----------          --------------------
- *     6 | 7 | 8           bit6 | bit7 | bit8
- * 
- * Each WIN_MASK represents a winning combination in binary:
- * - Row 0: bits 0,1,2 → 0b000000111 = 0x007
- * - Main diagonal: bits 0,4,8 → 0b100010001 = 0x111
- * 
- * EFFICIENCY: A player wins if their bitmask contains ALL bits of ANY win mask.
- * Check: (playerMask & WIN_MASK) == WIN_MASK
- * This is a single CPU instruction vs. checking multiple array positions.
- */
-// Shared utilities (WIN_MASKS, MOVE_ORDER, boardToMasks, isWinnerMask,
-// countBits) are provided by minimax_utils.c/h for consistency.
-
-// ============================================================================
-// BITBOARD UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * @brief Convert traditional 3×3 board array to compact bitboard representation
- * 
- * MEMORY TRANSFORMATION:
- * Input:  char board[3][3] = 9+ bytes (each char typically 1 byte)
- * Output: Two integers (maskX, maskO) = 8 bytes total
- * 
- * ALGORITHM:
- * For each cell [r][c]:
- *   1. Calculate linear index: idx = row*3 + col (0-8)
- *   2. If cell contains 'X': Set bit idx in maskX
- *   3. If cell contains 'O': Set bit idx in maskO
- *   4. Empty cells (' '): Leave corresponding bit as 0 in both masks
- * 
- * EXAMPLE:
- * Board:        maskX (binary):      maskO (binary):
- *  X | O | X     1 0 1 0 0 0 1 0 0    0 1 0 1 0 0 0 0 0
- *  O | X |       = 0x105               = 0x00A
- *    |   | X
- * 
- * @param board 3x3 character array representing the game board
- * @param maskX Output: bitmask where 1 = X is present at that position
- * @param maskO Output: bitmask where 1 = O is present at that position
- */
-
-// ============================================================================
 // MINIMAX ALGORITHM WITH ALPHA-BETA PRUNING
 // ============================================================================
 
@@ -281,31 +225,6 @@ static int minimax_masks(int playerMask, int oppMask, int depth,
     return best;
 }
 
-/**
- * @brief Count the number of pieces (set bits) in a bitmask
- * 
- * ALGORITHM (Brian Kernighan's method variation):
- * - Extract least significant bit with (mask & 1)
- * - Add to count
- * - Right shift to process next bit
- * - Repeat until mask is 0
- * 
- * PURPOSE:
- * Used to determine whose turn it is by comparing piece counts:
- * - If countX == countO: X's turn (X moves first)
- * - If countX > countO: O's turn (players alternate)
- * 
- * EXAMPLE:
- * mask = 0b100010001 (bits 0, 4, 8 set)
- * Iteration 1: count=1, mask=0b10001000
- * Iteration 2: count=1, mask=0b1000100
- * Iteration 3: count=1, mask=0b100010
- * ... continues until count=3
- * 
- * @param mask Bitmask representing pieces on board
- * @return Number of set bits (pieces) in the mask
- */
-// countBits provided by minimax_utils.c
 
 // ============================================================================
 // PUBLIC API FUNCTION

@@ -23,66 +23,6 @@
 #include "model_minimax.h"
 #include "minimax_utils.h"
 
-// ============================================================================
-// CONSTANTS AND STATIC VARIABLES
-// ============================================================================
-
-
-/**
- * @brief Precomputed winning line bit masks
- * 
- * BITBOARD LAYOUT:
- *   Board positions:    Bit indices:
- *     0 | 1 | 2           bit0 | bit1 | bit2
- *    -----------          --------------------
- *     3 | 4 | 5           bit3 | bit4 | bit5
- *    -----------          --------------------
- *     6 | 7 | 8           bit6 | bit7 | bit8
- * 
- * Each WIN_MASK represents a winning combination in binary:
- * - Row 0: bits 0,1,2 → 0b000000111 = 0x007
- * - Main diagonal: bits 0,4,8 → 0b100010001 = 0x111
- * 
- * EFFICIENCY: A player wins if their bitmask contains ALL bits of ANY win mask.
- * Check: (playerMask & WIN_MASK) == WIN_MASK
- * This is a single CPU instruction vs. checking multiple array positions.
- */
-// WIN_MASKS and MOVE_ORDER are now in minimax_utils.h/.c
-
-// ============================================================================
-// BITBOARD UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * @brief Convert 3x3 board to bitboard representation
- * 
- * Two bitmasks: maskX (where X is) and maskO (where O is).
- * Each bit position represents one cell (0-8 in row-major order).
- * Much faster for win checking and game tree exploration.
- */
-static inline void boardToMasks(const char board[3][3], int *maskX, int *maskO) {
-    *maskX = 0;
-    *maskO = 0;
-    for (int r = 0; r < 3; ++r)
-        for (int c = 0; c < 3; ++c) {
-            int idx = r * 3 + c; // cell index
-            char ch = board[r][c];
-            if (ch == 'X') *maskX |= (1 << idx); // set bit for X
-            else if (ch == 'O') *maskO |= (1 << idx); // set bit for O
-        }
-}
-
-/**
- * @brief Check if bitmask contains a winning line
- * 
- * If (mask & WIN_MASK) == WIN_MASK, then all 3 cells of that line are in mask.
- */
-static inline bool isWinnerMask(int mask) {
-    for (int i = 0; i < 8; ++i)
-        if ((mask & WIN_MASKS[i]) == WIN_MASKS[i])
-            return true;
-    return false;
-}
 
 // ============================================================================
 // IMPERFECT MINIMAX ALGORITHM
@@ -151,33 +91,6 @@ static int minimax_masks(int playerMask, int oppMask, int depth,
 
     return best;
 }
-
-
-/**
- * @brief Count the number of pieces (set bits) in a bitmask
- * 
- * ALGORITHM (Brian Kernighan's method variation):
- * - Extract least significant bit with (mask & 1)
- * - Add to count
- * - Right shift to process next bit
- * - Repeat until mask is 0
- * 
- * PURPOSE:
- * Used to determine whose turn it is by comparing piece counts:
- * - If countX == countO: X's turn (X moves first)
- * - If countX > countO: O's turn (players alternate)
- * 
- * EXAMPLE:
- * mask = 0b100010001 (bits 0, 4, 8 set)
- * Iteration 1: count=1, mask=0b10001000
- * Iteration 2: count=1, mask=0b1000100
- * Iteration 3: count=1, mask=0b100010
- * ... continues until count=3
- * 
- * @param mask Bitmask representing pieces on board
- * @return Number of set bits (pieces) in the mask
- */
-// countBits provided by minimax_utils.c
 
 
 // ============================================================================
