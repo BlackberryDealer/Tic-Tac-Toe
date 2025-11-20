@@ -495,13 +495,14 @@ void AppendGameToHistory(void)
 }
 
 /**
- * @brief Loads the game history from "game_history.txt" into the state.
- * * Reads up to the first 20 lines from the file to be displayed.
+ * @brief OPTIMIZATION: Loads game history from file using dynamic allocation.
+ * Reads "game_history.txt" and allocates memory for each line.
+ * Grows the array dynamically as needed using realloc.
  */
-void LoadGameHistory(void)
-{
+void LoadGameHistory(void) {
     game.historyLineCount = 0;
-    FILE* file = fopen("game_history.txt", "r"); // "r" mode = read
+    
+    FILE* file = fopen("game_history.txt", "r");
     if (file == NULL) {
         return;
     }
@@ -526,9 +527,10 @@ void LoadGameHistory(void)
         game.gameHistory[game.historyLineCount] = (char *)malloc(strlen(buffer) + 1);
         if (game.gameHistory[game.historyLineCount] != NULL) {
             strcpy(game.gameHistory[game.historyLineCount], buffer);
-        game.historyLineCount++;
+            game.historyLineCount++;
+        }
     }
-
+    
     fclose(file);
 }
 
