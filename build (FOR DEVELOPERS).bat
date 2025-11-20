@@ -15,6 +15,7 @@ gcc -o bin\TicTacToe.exe ^
     Game_algorithms\PERFECT_minimax.c ^
     Game_algorithms\IMPERFECT_minimax.c ^
     Game_algorithms\model_minimax.c ^
+    Game_algorithms\minimax_utils.c ^
     -Ilib\raylib ^
     -Llib\raylib ^
     -lraylib -lopengl32 -lgdi32 -lwinmm ^
