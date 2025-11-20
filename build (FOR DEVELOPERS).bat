@@ -9,15 +9,12 @@ if not exist "bin" mkdir bin
 REM Compile all source files with static linking
 gcc -o bin\TicTacToe.exe ^
     main.c ^
-    Team_A\game_state.c ^
-    Team_A\screens.c ^
-    Team_A\ui.c ^
-    Team_B\1_player.c ^
-    Team_B\2_player.c ^
-    Team_B\gameboard.c ^
-    Team_B\PERFECT_minimax.c ^
-    Team_B\IMPERFECT_minimax.c ^
-    Team_B\model_minimax.c ^
+    GUI_handlers\game_state.c ^
+    GUI_handlers\screens.c ^
+    GUI_handlers\ui.c ^
+    Game_algorithms\PERFECT_minimax.c ^
+    Game_algorithms\IMPERFECT_minimax.c ^
+    Game_algorithms\model_minimax.c ^
     -Ilib\raylib ^
     -Llib\raylib ^
     -lraylib -lopengl32 -lgdi32 -lwinmm ^
@@ -37,8 +34,8 @@ if %errorlevel% equ 0 (
     )
     
     REM Copy any other required files
-    if exist "Team_B\logistic_regression_params.json" (
-        copy /Y "Team_B\logistic_regression_params.json" "bin\" >nul
+    if exist "Game_algorithms\logistic_regression_params.json" (
+        copy /Y "Game_algorithms\logistic_regression_params.json" "bin\" >nul
         echo   Copied: logistic_regression_params.json
     )
     

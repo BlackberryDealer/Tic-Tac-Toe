@@ -46,9 +46,10 @@ struct Move findBestMovePerfect(char board[3][3], char aiSymbol);
  * mistakes and make the AI beatable. Good for medium difficulty.
  * 
  * @param board 3x3 game board (char array)
+ * @param aiSymbol The symbol the AI is playing ('X' or 'O')
  * @return Move structure with the best move coordinates
  */
-struct Move findBestMoveImperfect(char board[3][3]);
+struct Move findBestMoveImperfect(char board[3][3], char aiSymbol);
 
 /**
  * @brief Find the best move using model-based evaluation

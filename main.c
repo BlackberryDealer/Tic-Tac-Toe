@@ -7,8 +7,8 @@
  */
 
 #include "raylib.h"
-#include "Team_A/game_state.h"
-#include "Team_A/screens.h"
+#include "GUI_handlers/game_state.h"
+#include "GUI_handlers/screens.h"
 
 /**
  * @brief Main entry point
