@@ -710,7 +710,7 @@ void HandleGameScreen(void)
         {
             MakeAIMove();
             game.aiTurn = false;
-            if (CheckWinner() || IsBoardFull())
+            if (CheckWinner(game.board) || IsBoardFull(game.board))
             {
                 if (!game.gameOver)
                 {
@@ -775,7 +775,7 @@ void HandleGameScreen(void)
                     game.board[i][j] = game.currentPlayer;
                     
                     // Check for Win/Draw
-                    if (CheckWinner() || IsBoardFull())
+                    if (CheckWinner(game.board) || IsBoardFull(game.board))
                     {
                         if (!game.gameOver)
                         {
