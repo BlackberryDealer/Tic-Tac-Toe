@@ -176,27 +176,6 @@ double evaluateBoardLogistic(const char board[3][3]) {
     return val;
 }
 
-/**
- * @brief Check if there are any empty cells remaining on the board
- * 
- * This helper function determines if the game can continue by checking
- * if any moves are still available.
- * 
- * @param board 3x3 game board array
- * @return 1 (true) if at least one empty cell exists, 0 (false) otherwise
- */
-static int isMovesLeft(const char board[3][3]) {
-    // Iterate through all 9 board positions
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++)
-            // Check if this cell is empty (space character)
-            if (board[i][j] == ' ')
-                return 1;  // Found an empty cell, moves are still possible
-    
-    // No empty cells found, board is full
-    return 0;
-}
-
 // ============================================================================
 // PUBLIC API FUNCTION
 // ============================================================================

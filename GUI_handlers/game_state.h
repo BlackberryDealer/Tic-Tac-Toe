@@ -70,16 +70,16 @@ typedef struct {
  * and `Draw...` functions to call each frame.
  */
 typedef enum {
-    SCREEN_START,
-    SCREEN_MODE_SELECT,
-    SCREEN_THEME_SELECT,
-    SCREEN_DIFFICULTY_SELECT,
-    SCREEN_SYMBOL_SELECT_1P,
-    SCREEN_SYMBOL_SELECT_2P,
-    SCREEN_INSTRUCTIONS,
-    SCREEN_HISTORY,
-    SCREEN_GAME,
-    SCREEN_GAME_OVER    /**< Game over screen with results */
+    SCREEN_START,                /**< Main menu screen */
+    SCREEN_MODE_SELECT,          /**< Player mode selection screen */
+    SCREEN_THEME_SELECT,         /**< Theme selection screen */
+    SCREEN_DIFFICULTY_SELECT,    /**< Difficulty selection screen */
+    SCREEN_SYMBOL_SELECT_1P,     /**< Symbol selection screen for 1-player mode */
+    SCREEN_SYMBOL_SELECT_2P,     /**< Symbol selection screen for 2-player mode */
+    SCREEN_INSTRUCTIONS,         /**< Instructions screen */
+    SCREEN_HISTORY,              /**< Game history screen */
+    SCREEN_GAME,                 /**< Main game screen */
+    SCREEN_GAME_OVER             /**< Game over screen with results */
 } GameScreen;
 
 /**
@@ -141,10 +141,10 @@ typedef struct {
     int difficulty;
     
     // Board & Player State
-    char board[3][3];
-    char humanSymbol;
-    char aiSymbol;
-    char currentPlayer;
+    char board[3][3];       // a nested 3x3 array representing the Tic-Tac-Toe board - stores 'X', 'O', or ' ' (empty)
+    char humanSymbol;       // variable to store the human player's selected symbol ('X' or 'O')
+    char aiSymbol;          // variable to store the AI player's symbol ('X' or 'O')
+    char currentPlayer;     // variable to track whose turn it is ('X' or 'O')
     
     // Game Status
     bool gameOver;
