@@ -156,6 +156,41 @@ static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
     return best;
 }
 
+
+/**
+ * @brief Count the number of pieces (set bits) in a bitmask
+ * 
+ * ALGORITHM (Brian Kernighan's method variation):
+ * - Extract least significant bit with (mask & 1)
+ * - Add to count
+ * - Right shift to process next bit
+ * - Repeat until mask is 0
+ * 
+ * PURPOSE:
+ * Used to determine whose turn it is by comparing piece counts:
+ * - If countX == countO: X's turn (X moves first)
+ * - If countX > countO: O's turn (players alternate)
+ * 
+ * EXAMPLE:
+ * mask = 0b100010001 (bits 0, 4, 8 set)
+ * Iteration 1: count=1, mask=0b10001000
+ * Iteration 2: count=1, mask=0b1000100
+ * Iteration 3: count=1, mask=0b100010
+ * ... continues until count=3
+ * 
+ * @param mask Bitmask representing pieces on board
+ * @return Number of set bits (pieces) in the mask
+ */
+static inline int countBits(int mask) {
+    int count = 0;
+    while (mask) {
+        count += mask & 1;  // Add least significant bit to count
+        mask >>= 1;         // Shift right to process next bit
+    }
+    return count;
+}
+
+
 // ============================================================================
 // PUBLIC API FUNCTION
 // ============================================================================
@@ -173,9 +208,34 @@ struct Move findBestMoveImperfect(char board[3][3], char aiSymbol) {
     int maskX = 0, maskO = 0;
     boardToMasks(board, &maskX, &maskO);
 
-    // Map AI/opponent masks based on aiSymbol so function works for 'X' or 'O'
-    int aiMask = (aiSymbol == 'O') ? maskO : maskX;
-    int oppMask = (aiSymbol == 'O') ? maskX : maskO;
+    // Determine which player is the AI
+    // Count pieces to figure out whose turn it is
+    int countX = countBits(maskX);
+    int countO = countBits(maskO);
+
+    int aiMask, oppMask;
+    if (countX == 0 && countO == 0) {
+        // Empty board - use the provided aiSymbol
+        if (aiSymbol == 'X') {
+            aiMask = maskX;    // AI plays X
+            oppMask = maskO;   // Opponent plays O
+        } else {
+            aiMask = maskO;    // AI plays O
+            oppMask = maskX;   // Opponent plays X
+        }
+    } else {
+        // Board has pieces - determine from counts
+        // The player with fewer (or equal) pieces goes next
+        if (countX <= countO) {
+            // X's turn (X has fewer or equal pieces)
+            aiMask = maskX;
+            oppMask = maskO;
+        } else {
+            // O's turn (O has fewer pieces)
+            aiMask = maskO;
+            oppMask = maskX;
+        }
+    }
 
     int occupied = aiMask | oppMask;
     struct Move bestMove = { -1, -1 };
