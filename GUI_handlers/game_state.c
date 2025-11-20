@@ -213,49 +213,33 @@ static void updateWinStatistics(void);
  * it sets `game.winner` and calls the `updateWinStatistics` helper
  * before returning `true`.
  */
-bool CheckWinner(void)
+// OPTIMIZATION: Lookup table for all 8 winning lines
+static const int WIN_LINES[8][3] = {
+    {0, 1, 2}, {3, 4, 5}, {6, 7, 8},  // rows
+    {0, 3, 6}, {1, 4, 7}, {2, 5, 8},  // columns
+    {0, 4, 8}, {2, 4, 6}              // diagonals
+};
+
+bool CheckWinner(const char (*board)[3])
 {
-    // Check all rows for three in a row
-    for (int i = 0; i < 3; i++) {
-        if (game.board[i][0] != ' ' &&
-            game.board[i][0] == game.board[i][1] &&
-            game.board[i][1] == game.board[i][2]) {
-            game.winner = game.board[i][0];
+    // Cast 2D array to flat array for easier indexing
+    const char *flat = (const char *)board;
+    
+    // Check all 8 winning lines using lookup table
+    for (int line = 0; line < 8; line++) {
+        int a = WIN_LINES[line][0];
+        int b = WIN_LINES[line][1];
+        int c = WIN_LINES[line][2];
+        
+        if (flat[a] != ' ' && 
+            flat[a] == flat[b] && 
+            flat[b] == flat[c]) {
+            game.winner = flat[a];
             updateWinStatistics();
             return true;
         }
     }
     
-    // Check all columns for three in a row
-    for (int i = 0; i < 3; i++) {
-        if (game.board[0][i] != ' ' && 
-            game.board[0][i] == game.board[1][i] && 
-            game.board[1][i] == game.board[2][i]) {
-            game.winner = game.board[0][i];
-            updateWinStatistics();
-            return true;
-        }
-    }
-    
-    // Check main diagonal (top-left to bottom-right)
-    if (game.board[0][0] != ' ' && 
-        game.board[0][0] == game.board[1][1] && 
-        game.board[1][1] == game.board[2][2]) {
-        game.winner = game.board[0][0];
-        updateWinStatistics();
-        return true;
-    }
-    
-    // Check anti-diagonal (top-right to bottom-left)
-    if (game.board[0][2] != ' ' && 
-        game.board[0][2] == game.board[1][1] && 
-        game.board[1][1] == game.board[2][0]) {
-        game.winner = game.board[0][2];
-        updateWinStatistics();
-        return true;
-    }
-    
-    // No winner found
     return false;
 }
 
@@ -291,14 +275,16 @@ static void updateWinStatistics(void)
  * If no empty cells are found, it's a draw, so it increments
  * the draw counter and returns `true`.
  */
-bool IsBoardFull(void)
+// OPTIMIZATION: Made board parameter so it can check different boards
+bool IsBoardFull(const char (*board)[3])
 {
+    // Cast to flat array for more efficient iteration
+    const char *flat = (const char *)board;     // 9 cells total, faster to loop linearly
+    
     // Check if any cell is empty
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            if (game.board[i][j] == ' ') {
-                return false; // Found an empty cell, not full
-            }
+    for (int i = 0; i < 9; i++) {
+        if (flat[i] == ' ') {
+            return false;
         }
     }
     
@@ -307,6 +293,7 @@ bool IsBoardFull(void)
     game.draws++;
     return true;
 }
+
 
 // ============================================================================
 // AI MOVE EXECUTION

@@ -261,7 +261,7 @@ void ResetBoard(void);
  * field and statistics if a winner is found.
  * * @return true if a winner is found, false otherwise
  */
-bool CheckWinner(void);
+bool CheckWinner(const char (*board)[3]); // using pointer to 2D array of 3 chars so that it can be called with different boards
 
 /**
  * @brief Check if the board is completely filled
@@ -269,7 +269,7 @@ bool CheckWinner(void);
  * and no winner exists, increments the draw counter.
  * * @return true if board is full, false otherwise
  */
-bool IsBoardFull(void);
+bool IsBoardFull(const char (*board)[3]);
 
 /**
  * @brief Execute the AI's move based on current difficulty
