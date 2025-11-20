@@ -89,7 +89,7 @@ static inline bool isWinnerMask(int mask) {
  * @brief Imperfect minimax algorithm with depth limiting and randomization
  * 
  * This implementation makes the AI beatable by:
- * - Limiting search depth to 2 (doesn't see far ahead)
+ * - Limiting search depth to 5 (doesn't see far ahead)
  * - Randomizing move order (introduces variability and mistakes)
  * 
  * @param playerMask Bitmask for the maximizing player (AI)
@@ -106,8 +106,8 @@ static int minimax_masks(int playerMask, int oppMask, int depth, bool isMax) {
     if (isWinnerMask(oppMask)) {
         return -10 + depth;  // Human wins
     }
-    // Draw or depth cutoff (imperfect AI stops at depth 2)
-    if ((playerMask | oppMask) == 0x1FF || depth >= 2) {
+    // Draw or depth cutoff (imperfect AI stops at depth 5)
+    if ((playerMask | oppMask) == 0x1FF || depth >= 5) {
         return 0;
     }
 
