@@ -243,6 +243,9 @@ extern Theme allThemes[THEME_COUNT];
 // Core game functions
 void InitGame(void);
 
+// OPTIMIZATION: Added to free dynamic memory
+void CleanupGame(void);  // OPTIMIZATION: Added to free dynamic memory
+
 /**
  * @brief Reset the game board to an empty state
  * * Clears all cells on the board and resets game status flags.
