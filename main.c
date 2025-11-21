@@ -21,6 +21,7 @@ int main(void)
     // Initialize window with resizable flag
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Tic-Tac-Toe");
+    InitAudioDevice();
     SetTargetFPS(60);
     
     // Initialize game state (board, settings, theme)
@@ -139,6 +140,7 @@ int main(void)
      // OPTIMIZATION: Clean up dynamic memory before exit
     CleanupGame();
     // Cleanup: close window and exit
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }
