@@ -31,10 +31,10 @@ Rectangle CreateButton(float x, float y, float width, float height)
  * Its purpose is to make the `Handle...` functions in `screens.c`
  * more self-documenting and readable.
  */
-bool IsButtonHovered(Rectangle button)
+bool IsButtonHovered(const Rectangle *button)
 {
     Vector2 mousePos = GetMousePosition();
-    return CheckCollisionPointRec(mousePos, button);
+    return CheckCollisionPointRec(mousePos, *button);
 }
 
 /**
@@ -44,28 +44,22 @@ bool IsButtonHovered(Rectangle button)
  * border thicker, or change the hover effect), we only need
  * to edit this one function.
  */
-void DrawButton(Rectangle button, const char* text, Color color)
+void DrawButton(const Rectangle *button, const char* text, Color color)
 {
-    // Determine button color (brighten on hover)
     Color drawColor = color;
     if (IsButtonHovered(button)) {
-        // Brighten each color component by 50 (clamped to 255)
-        // This creates a simple, effective hover feedback.
         drawColor.r = (color.r + 50 > 255) ? 255 : color.r + 50;
         drawColor.g = (color.g + 50 > 255) ? 255 : color.g + 50;
         drawColor.b = (color.b + 50 > 255) ? 255 : color.b + 50;
     }
     
-    // Draw button background
-    DrawRectangleRec(button, drawColor);
+    // Use -> instead of . for pointer access
+    DrawRectangleRec(*button, drawColor);
+    DrawRectangleLinesEx(*button, 3, colorDark);
     
-    // Draw button border (using the theme's 'dark' color)
-    DrawRectangleLinesEx(button, 3, colorDark);
-    
-    // Draw centered text
     int textWidth = MeasureText(text, 30);
     DrawText(text, 
-             button.x + (button.width - textWidth)/2,  // Center text horizontally
-             button.y + (button.height - 30)/2,  // Center text vertically
-             30, colorLight); // Use theme's 'light' color for text
+             button->x + (button->width - textWidth)/2,
+             button->y + (button->height - 30)/2,
+             30, colorLight);
 }

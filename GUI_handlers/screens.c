@@ -98,15 +98,15 @@ void DrawStartScreen(void)
     Rectangle themesButton = CreateButton(ScaleX(1280 - 90), ScaleY(720 - 40), ScaleSize(160), ScaleSize(50));
     
     // Draw the buttons
-    DrawButton(playButton, "PLAY", colorSecondary);
-    DrawButton(loadButton, "LOAD GAME", colorAccent);
-    DrawButton(instructionsButton, "INSTRUCTIONS", colorPrimary);
-    DrawButton(historyButton, "HISTORY", colorPrimary);
-    DrawButton(themesButton, "THEMES", colorDark);
+    DrawButton(&playButton, "PLAY", colorSecondary);
+    DrawButton(&loadButton, "LOAD GAME", colorAccent);
+    DrawButton(&instructionsButton, "INSTRUCTIONS", colorPrimary);
+    DrawButton(&historyButton, "HISTORY", colorPrimary);
+    DrawButton(&themesButton, "THEMES", colorDark);
     
     // Fullscreen button text changes based on current state
     const char* fullscreenText = game.isFullscreen ? "WINDOWED MODE" : "FULLSCREEN";
-    DrawButton(fullscreenButton, fullscreenText, colorWarning);
+    DrawButton(&fullscreenButton, fullscreenText, colorWarning);
 }
 
 void HandleStartScreen(void)
@@ -121,12 +121,12 @@ void HandleStartScreen(void)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(playButton))
+        if (IsButtonHovered(&playButton))
         {
             PlaySound(game.sfx.click); 
             game.screen = SCREEN_MODE_SELECT;
         }
-        else if (IsButtonHovered(loadButton))
+        else if (IsButtonHovered(&loadButton))
         {
             if (LoadGame())
             {
@@ -134,23 +134,23 @@ void HandleStartScreen(void)
                 game.screen = SCREEN_GAME;
             }
         }
-        else if (IsButtonHovered(themesButton))
+        else if (IsButtonHovered(&themesButton))
         {
             PlaySound(game.sfx.click); 
             game.screen = SCREEN_THEME_SELECT;
         }
-        else if (IsButtonHovered(instructionsButton))
+        else if (IsButtonHovered(&instructionsButton))
         {
             PlaySound(game.sfx.click); 
             game.screen = SCREEN_INSTRUCTIONS;
         }
-        else if (IsButtonHovered(historyButton))
+        else if (IsButtonHovered(&historyButton))
         {
             PlaySound(game.sfx.click); 
             LoadGameHistory();
             game.screen = SCREEN_HISTORY;
         }
-        else if (IsButtonHovered(fullscreenButton))
+        else if (IsButtonHovered(&fullscreenButton))
         {
             PlaySound(game.sfx.click); 
             game.isFullscreen = !game.isFullscreen;
@@ -188,9 +188,9 @@ void DrawModeSelectScreen(void)
     Rectangle twoPlayerButton = CreateButton(ScaleX(640), ScaleY(370), ScaleSize(300), ScaleSize(80));
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(490), ScaleSize(200), ScaleSize(60));
     
-    DrawButton(onePlayerButton, "1 PLAYER", colorSecondary);
-    DrawButton(twoPlayerButton, "2 PLAYERS", colorWarning);
-    DrawButton(backButton, "BACK", colorDark);
+    DrawButton(&onePlayerButton, "1 PLAYER", colorSecondary);
+    DrawButton(&twoPlayerButton, "2 PLAYERS", colorWarning);
+    DrawButton(&backButton, "BACK", colorDark);
 }
 
 void HandleModeSelectScreen(void)
@@ -201,19 +201,19 @@ void HandleModeSelectScreen(void)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(onePlayerButton))
+        if (IsButtonHovered(&onePlayerButton))
         {
             PlaySound(game.sfx.click); 
             game.mode = MODE_ONE_PLAYER;
             game.screen = SCREEN_DIFFICULTY_SELECT;
         }
-        else if (IsButtonHovered(twoPlayerButton))
+        else if (IsButtonHovered(&twoPlayerButton))
         {
             PlaySound(game.sfx.click); 
             game.mode = MODE_TWO_PLAYER;
             game.screen = SCREEN_SYMBOL_SELECT_2P;
         }
-        else if (IsButtonHovered(backButton))
+        else if (IsButtonHovered(&backButton))
         {
             PlaySound(game.sfx.click); 
             game.screen = SCREEN_START;
@@ -236,10 +236,10 @@ void DrawDifficultySelectScreen(void)
     Rectangle hardButton = CreateButton(ScaleX(640), ScaleY(410), ScaleSize(280), ScaleSize(75));
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(520), ScaleSize(200), ScaleSize(60));
     
-    DrawButton(easyButton, "EASY", colorSecondary);
-    DrawButton(mediumButton, "MEDIUM", colorWarning);
-    DrawButton(hardButton, "HARD", colorAccent);
-    DrawButton(backButton, "BACK", colorDark);
+    DrawButton(&easyButton, "EASY", colorSecondary);
+    DrawButton(&mediumButton, "MEDIUM", colorWarning);
+    DrawButton(&hardButton, "HARD", colorAccent);
+    DrawButton(&backButton, "BACK", colorDark);
 }
 
 void HandleDifficultySelectScreen(void)
@@ -251,25 +251,25 @@ void HandleDifficultySelectScreen(void)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(easyButton))
+        if (IsButtonHovered(&easyButton))
         {
             PlaySound(game.sfx.click); 
             game.difficulty = DIFF_EASY;
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
-        else if (IsButtonHovered(mediumButton))
+        else if (IsButtonHovered(&mediumButton))
         {
             PlaySound(game.sfx.click); 
             game.difficulty = DIFF_MEDIUM;
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
-        else if (IsButtonHovered(hardButton))
+        else if (IsButtonHovered(&hardButton))
         {
             PlaySound(game.sfx.click); 
             game.difficulty = DIFF_HARD;
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
-        else if (IsButtonHovered(backButton))
+        else if (IsButtonHovered(&backButton))
         {
             PlaySound(game.sfx.click); 
             game.screen = SCREEN_MODE_SELECT;
@@ -291,9 +291,9 @@ void DrawSymbolSelectScreen(bool isPlayer1)
     Rectangle oButton = CreateButton(ScaleX(640 + 130), ScaleY(280), ScaleSize(180), ScaleSize(180));
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(500), ScaleSize(200), ScaleSize(60));
     
-    DrawButton(xButton, "X", colorPrimary);
-    DrawButton(oButton, "O", colorAccent);
-    DrawButton(backButton, "BACK", colorDark);
+    DrawButton(&xButton, "X", colorPrimary);
+    DrawButton(&oButton, "O", colorAccent);
+    DrawButton(&backButton, "BACK", colorDark);
 }
 
 void HandleSymbolSelectScreen(bool isPlayer1)
@@ -304,7 +304,7 @@ void HandleSymbolSelectScreen(bool isPlayer1)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(xButton))
+        if (IsButtonHovered(&xButton))
         {
             PlaySound(game.sfx.click); 
             if (game.mode == MODE_ONE_PLAYER) {
@@ -316,7 +316,7 @@ void HandleSymbolSelectScreen(bool isPlayer1)
             ResetBoard();
             game.screen = SCREEN_GAME;
         }
-        else if (IsButtonHovered(oButton))
+        else if (IsButtonHovered(&oButton))
         {
             PlaySound(game.sfx.click); 
             if (game.mode == MODE_ONE_PLAYER) {
@@ -328,7 +328,7 @@ void HandleSymbolSelectScreen(bool isPlayer1)
             ResetBoard();
             game.screen = SCREEN_GAME;
         }
-        else if (IsButtonHovered(backButton))
+        else if (IsButtonHovered(&backButton))
         {
             PlaySound(game.sfx.click);
             if (isPlayer1) {
@@ -384,13 +384,13 @@ void DrawInstructionsScreen(void)
     }
     
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
-    DrawButton(backButton, "BACK", colorPrimary);
+    DrawButton(&backButton, "BACK", colorPrimary);
 }
 
 void HandleInstructionsScreen(void)
 {
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsButtonHovered(backButton))
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsButtonHovered(&backButton))
     {
         PlaySound(game.sfx.click); // <--- SOUND ADDED
         game.screen = SCREEN_START;
@@ -629,7 +629,7 @@ void DrawGameScreen(void)
             ScaleSize(120), 
             ScaleSize(50)
         );
-        DrawButton(undoButton, "UNDO", colorAccent);
+        DrawButton(&undoButton, "UNDO", colorAccent);
     }
     
     // --- 6. Draw Bottom Buttons ---
@@ -652,9 +652,9 @@ void DrawGameScreen(void)
         ScaleSize(50)
     );
     
-    DrawButton(restartButton, "RESTART", colorWarning);
-    DrawButton(saveButton, "SAVE", colorSecondary);
-    DrawButton(menuButton, "MENU", colorDark);
+    DrawButton(&restartButton, "RESTART", colorWarning);
+    DrawButton(&saveButton, "SAVE", colorSecondary);
+    DrawButton(&menuButton, "MENU", colorDark);
 }
 
 void HandleGameScreen(void)
@@ -675,14 +675,13 @@ void HandleGameScreen(void)
     // 4. Handle Mouse Clicks (Buttons OR Board)
     if (mouseClicked)
     {
-        // --- CHECK BUTTONS ---
-        if (IsButtonHovered(restartButton))
+        if (IsButtonHovered(&restartButton))
         {
             PlaySound(game.sfx.click); 
             ResetBoard();
             return;
         }
-        else if (game.moveCount > 0 && IsButtonHovered(undoButton))
+        else if (game.moveCount > 0 && IsButtonHovered(&undoButton))
         {
             PlaySound(game.sfx.click); 
             if (game.moveCount > 0)
@@ -697,13 +696,13 @@ void HandleGameScreen(void)
             }
             return;
         }
-        else if (IsButtonHovered(saveButton))
+        else if (IsButtonHovered(&saveButton))
         {
             PlaySound(game.sfx.click); 
             SaveGame();
             return;
         }
-        else if (IsButtonHovered(menuButton))
+        else if (IsButtonHovered(&menuButton))
         {
             PlaySound(game.sfx.click); 
             game.screen = SCREEN_START;
@@ -908,8 +907,8 @@ void DrawGameOverScreen(void)
         ScaleSize(45)
     );
     
-    DrawButton(playAgainButton, "PLAY AGAIN", colorSecondary);
-    DrawButton(menuButton, "MAIN MENU", colorDark);
+    DrawButton(&playAgainButton, "PLAY AGAIN", colorSecondary);
+    DrawButton(&menuButton, "MAIN MENU", colorDark);
 }
 
 void HandleGameOverScreen(void)
@@ -930,13 +929,13 @@ void HandleGameOverScreen(void)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(playAgainButton))
+        if (IsButtonHovered(&playAgainButton))
         {
             PlaySound(game.sfx.click); // <--- SOUND ADDED
             ResetBoard();
             game.screen = SCREEN_GAME;
         }
-        else if (IsButtonHovered(menuButton))
+        else if (IsButtonHovered(&menuButton))
         {
             PlaySound(game.sfx.click); // <--- SOUND ADDED
             game.screen = SCREEN_START;
@@ -964,12 +963,12 @@ void DrawThemeSelectScreen(void)
     Rectangle aquaticButton = CreateButton(ScaleX(640), ScaleY(430), ScaleSize(280), ScaleSize(60));
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(520), ScaleSize(200), ScaleSize(60));
     
-    DrawButton(defaultButton, "DEFAULT", colorSecondary);
-    DrawButton(darkButton, "DARK", colorSecondary);
-    DrawButton(forestButton, "FOREST", colorSecondary);
-    DrawButton(spaceButton, "SPACE", colorSecondary);
-    DrawButton(aquaticButton, "AQUATIC", colorSecondary);
-    DrawButton(backButton, "BACK", colorDark);
+    DrawButton(&defaultButton, "DEFAULT", colorSecondary);
+    DrawButton(&darkButton, "DARK", colorSecondary);
+    DrawButton(&forestButton, "FOREST", colorSecondary);
+    DrawButton(&spaceButton, "SPACE", colorSecondary);
+    DrawButton(&aquaticButton, "AQUATIC", colorSecondary);
+    DrawButton(&backButton, "BACK", colorDark);
     
     if (game.currentTheme == THEME_DEFAULT) DrawRectangleLinesEx(defaultButton, ScaleSize(5), colorAccent);
     if (game.currentTheme == THEME_DARK) DrawRectangleLinesEx(darkButton, ScaleSize(5), colorAccent);
@@ -989,12 +988,36 @@ void HandleThemeSelectScreen(void)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(defaultButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_DEFAULT); }
-        else if (IsButtonHovered(darkButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_DARK); }
-        else if (IsButtonHovered(forestButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_FOREST); }
-        else if (IsButtonHovered(spaceButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_SPACE); }
-        else if (IsButtonHovered(aquaticButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_AQUATIC); }
-        else if (IsButtonHovered(backButton)) { PlaySound(game.sfx.click); game.screen = SCREEN_START; }
+        if (IsButtonHovered(&defaultButton))
+        {
+            PlaySound(game.sfx.click);
+            ChangeTheme(THEME_DEFAULT);
+        }
+        else if (IsButtonHovered(&darkButton))
+        {
+            PlaySound(game.sfx.click);
+            ChangeTheme(THEME_DARK);
+        }
+        else if (IsButtonHovered(&forestButton))
+        {
+            PlaySound(game.sfx.click);
+            ChangeTheme(THEME_FOREST);
+        }
+        else if (IsButtonHovered(&spaceButton))
+        {
+            PlaySound(game.sfx.click);
+            ChangeTheme(THEME_SPACE);
+        }
+        else if (IsButtonHovered(&aquaticButton))
+        {
+            PlaySound(game.sfx.click);
+            ChangeTheme(THEME_AQUATIC);
+        }
+        else if (IsButtonHovered(&backButton))
+        {
+            PlaySound(game.sfx.click);
+            game.screen = SCREEN_START;
+        }
     }
 }
 
@@ -1068,12 +1091,12 @@ void DrawHistoryScreen(void)
     }
     
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(620), ScaleSize(200), ScaleSize(50));
-    DrawButton(backButton, "BACK", colorPrimary);
+    DrawButton(&backButton, "BACK", colorPrimary);
     
     if (game.historyLineCount > 0)
     {
         Rectangle clearButton = CreateButton(ScaleX(640 + 245), ScaleY(160), ScaleSize(200), ScaleSize(50));
-        DrawButton(clearButton, "CLEAR", colorAccent);
+        DrawButton(&clearButton, "CLEAR", colorAccent);
     }
 }
 
@@ -1085,13 +1108,13 @@ void HandleHistoryScreen(void)
     // Handle Button Clicks
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(backButton))
+        if (IsButtonHovered(&backButton))
         {
             PlaySound(game.sfx.click); // <--- SOUND ADDED
             game.screen = SCREEN_START;
             game.historyScrollOffset = 0; 
         }
-        else if (game.historyLineCount > 0 && IsButtonHovered(clearButton))
+        else if (game.historyLineCount > 0 && IsButtonHovered(&clearButton))
         {
             PlaySound(game.sfx.click); // <--- SOUND ADDED
             ClearGameHistory();

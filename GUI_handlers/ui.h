@@ -39,7 +39,7 @@ Rectangle CreateButton(float x, float y, float width, float height);
  * * @param button The button rectangle to check
  * @return true if mouse is over the button, false otherwise
  */
-bool IsButtonHovered(Rectangle button);
+bool IsButtonHovered(const Rectangle *button);
 
 /**
  * @brief Draw a button with text and hover effect
@@ -54,6 +54,6 @@ bool IsButtonHovered(Rectangle button);
  * @param text The text to display on the button
  * @param color The base color of the button
  */
-void DrawButton(Rectangle button, const char* text, Color color);
+void DrawButton(const Rectangle *button, const char* text, Color color);
 
 #endif // UI_H
