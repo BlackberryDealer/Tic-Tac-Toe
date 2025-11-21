@@ -1,297 +1,144 @@
 /**
  * @file PERFECT_minimax.c
- * @brief Perfect minimax AI implementation with bitboard optimization
- * 
- * ============================================================================
- * MINIMAX ALGORITHM EXPLANATION:
- * ============================================================================
- * Minimax is a decision-making algorithm for two-player zero-sum games.
- * It works by:
- * 1. Building a game tree of all possible moves from the current position
- * 2. Evaluating terminal states (win/loss/draw) with numeric scores
- * 3. Propagating scores up the tree:
- *    - Maximizer (AI) chooses moves that MAXIMIZE score
- *    - Minimizer (opponent) chooses moves that MINIMIZE score
- * 4. Assuming both players play optimally
- *    
- * Scores: +10 = AI wins, -10 = Opponent wins, 0 = Draw
- * AI picks the move with the highest guaranteed minimum score.
- * 
- * ============================================================================
- * ALPHA-BETA PRUNING EXPLANATION:
- * ============================================================================
- * Optimization that eliminates branches that cannot affect the final decision.
- * - Alpha: Best value maximizer can guarantee so far (initially -∞)
- * - Beta: Best value minimizer can guarantee so far (initially +∞)
- * - Prune when alpha >= beta (the position won't be chosen by rational play)
- * 
- * Example: If AI found a move scoring +5, and while exploring another move
- * finds the opponent can force -3, we can stop - opponent will never allow
- * this branch since they already have a better option elsewhere.
- * 
- * ============================================================================
- * MEMORY EFFICIENCY IMPROVEMENTS IN THIS CODE:
- * ============================================================================
- * 1. BITBOARD REPRESENTATION:
- *    - Traditional: 3x3 char array = 9 bytes minimum
- *    - Bitboard: Two 32-bit integers = 8 bytes total
- *    - Each bit (0-8) represents one board cell: 0=empty, 1=occupied
- *    - Uses bitwise operations (AND, OR) which are CPU-native and fast
- * 
- * 2. NO BOARD COPYING:
- *    - Traditional minimax copies entire board arrays for each recursive call
- *    - Bitboard version: Just pass two integers (8 bytes) by value
- *    - Recursive depth of 9 × multiple branches = huge memory savings
- * 
- * 3. PRECOMPUTED WIN CONDITIONS:
- *    - Win patterns stored as bit masks (compile-time constants)
- *    - Checking wins = single bitwise AND operation vs. loop comparisons
- * 
- * 4. MOVE ORDERING:
- *    - Tries best moves first (center, corners) for faster pruning
- *    - Better pruning = fewer nodes explored = less memory/time
+ * @brief Unified Minimax Implementation (Perfect & Imperfect)
+ * * This file implements the core Minimax algorithm. 
+ * It supports an adjustable "errorRate" to toggle between:
+ * 1. PERFECT PLAY (Hard): errorRate = 0
+ * 2. IMPERFECT PLAY (Medium): errorRate = 20 (Forced Randomness)
  */
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "minimax.h"
 #include "minimax_utils.h"
 
 // ============================================================================
-// MINIMAX ALGORITHM WITH ALPHA-BETA PRUNING
+// MINIMAX ALGORITHM (PRIVATE HELPER)
 // ============================================================================
 
 /**
- * @brief Core minimax algorithm using memory-efficient bitboard representation
- * 
- * ALGORITHM FLOW:
- * 1. BASE CASES (Terminal States):
- *    - Check if current player won → return positive score
- *    - Check if opponent won → return negative score
- *    - Check if board full (draw) → return 0
- * 
- * 2. RECURSIVE CASE:
- *    - Try each empty cell as a potential move
- *    - Recursively evaluate the resulting position
- *    - If maximizing: keep track of highest score (AI wants high scores)
- *    - If minimizing: keep track of lowest score (opponent wants low scores)
- *    - Apply alpha-beta pruning to skip irrelevant branches
- * 
- * 3. RETURN:
- *    - Best score achievable from this position with optimal play
- * 
- * ALPHA-BETA PRUNING MECHANICS:
- * - Alpha: "At least this good" for maximizer (AI)
- * - Beta: "At most this good" for minimizer (opponent)
- * - If alpha >= beta: The current position won't be reached in optimal play
- *   because one player already has a better alternative elsewhere
- * 
- * DEPTH ADJUSTMENT:
- * Scores are adjusted by depth to prefer:
- * - Winning sooner (10 - depth for wins)
- * - Losing later (-10 + depth for losses)
- * This makes the AI aggressive when winning, defensive when losing.
- * 
- * MEMORY EFFICIENCY:
- * - Only passes two integers (8 bytes) per recursive call
- * - No board copying, no dynamic allocation
- * - Stack frames are small and fast
- * 
- * @param playerMask Bitmask for maximizing player (AI's pieces)
- * @param oppMask Bitmask for minimizing player (opponent's pieces)
- * @param depth Current search depth (0 = root, increases in recursion)
- * @param alpha Best score maximizer can guarantee (lower bound for max)
- * @param beta Best score minimizer can guarantee (upper bound for min)
- * @param isMax true = AI's turn (maximize), false = opponent's turn (minimize)
- * @return Evaluation score: +10 to -10 range, adjusted by depth
+ * @brief Core minimax algorithm using bitboards and alpha-beta pruning.
+ * * This function is PURE STRATEGY (Unlimited Depth). 
+ * * It does not handle the randomness; that is handled in the public wrapper.
  */
 static int minimax_masks(int playerMask, int oppMask, int depth,
                          int alpha, int beta, bool isMax)
 {
-    /*
-     * NOTE: minimax_masks remains in PERFECT_minimax.c because the perfect
-     * AI uses the full-depth search (depth up to 9) and a specific
-     * alpha-beta calling convention. Keeping this implementation local
-     * makes it clearer and avoids changing semantics accidentally.
-     */
-    // ========================================================================
-    // TERMINAL STATE CHECKS (Base Cases - Stop Recursion)
-    // ========================================================================
-    
-    // Did the AI (maximizing player) win?
-    if (isWinnerMask(playerMask)) {
-        // Return positive score, reduced by depth to prefer faster wins
-        // Depth 1 win: +9, Depth 5 win: +5
-        return 10 - depth;
-    }
-    
-    // Did the opponent (minimizing player) win?
-    if (isWinnerMask(oppMask)) {
-        // Return negative score, adjusted by depth to delay losses
-        // Depth 1 loss: -9, Depth 5 loss: -5
-        return -10 + depth;
-    }
-    
-    // Is the board completely filled?
-    // 0x1FF = 0b111111111 (all 9 bits set)
-    // (playerMask | oppMask) gives all occupied cells
-    if ((playerMask | oppMask) == 0x1FF || depth == 9) {
-        return 0;  // Draw - no winner
-    }
+    // 1. TERMINAL STATE CHECKS
+    if (isWinnerMask(playerMask)) return 10 - depth;
+    if (isWinnerMask(oppMask)) return -10 + depth;
+    if ((playerMask | oppMask) == 0x1FF) return 0; // Draw
 
-    // ========================================================================
-    // RECURSIVE CASE (Continue Search)
-    // ========================================================================
-    
-    // Initialize best score based on whose turn it is
-    // Maximizer starts at -infinity (any score is better)
-    // Minimizer starts at +infinity (any score is better)
+    // 2. RECURSIVE SEARCH
     int best = isMax ? -1000 : 1000;
 
-    // Try all possible moves in strategic order (center → corners → edges)
     for (int mi = 0; mi < 9; ++mi) {
-        int pos = MOVE_ORDER[mi];  // Get next position to try (0-8)
-        int bit = (1 << pos);       // Convert to bitmask (single bit set)
+        int pos = MOVE_ORDER[mi]; // Optimize order (Center -> Corners -> Edges)
+        int bit = (1 << pos);
         
-        // Skip this position if already occupied by either player
-        // (playerMask | oppMask) gives all occupied cells
-        if ((playerMask | oppMask) & bit) {
-            continue;  // Cell taken, try next position
-        }
+        if ((playerMask | oppMask) & bit) continue; // Skip occupied
 
-        // ====================================================================
-        // MAXIMIZER'S TURN (AI Making Move)
-        // ====================================================================
         if (isMax) {
-            // Simulate placing AI's piece at this position
-            int newPlayer = playerMask | bit;  // Add bit to AI's mask
-            
-            // Recursively evaluate: opponent's response to this move
-            // - Opponent (minimizer) will try to minimize the score
-            // - Search one level deeper (depth + 1)
-            // - Pass alpha/beta bounds for pruning
-            int val = minimax_masks(newPlayer, oppMask, depth + 1, alpha, beta, false);
-            
-            // Is this move better than our current best?
-            if (val > best) {
-                best = val;
-            }
-            
-            // Update alpha (best score maximizer can guarantee)
-            // If we found something better than alpha, update it
-            alpha = (val > alpha) ? val : alpha;
-            
-            // PRUNING CHECK: Alpha-Beta Cutoff
-            // If alpha >= beta, the minimizer (opponent) will never allow
-            // this position because they have a better option elsewhere.
-            // No point exploring further moves in this branch.
-            if (alpha >= beta) {
-                break;  // Beta cutoff - prune remaining moves
-            }
-        }
-        // ====================================================================
-        // MINIMIZER'S TURN (Opponent Making Move)
-        // ====================================================================
-        else {
-            // Simulate placing opponent's piece at this position
-            int newOpp = oppMask | bit;  // Add bit to opponent's mask
-            
-            // Recursively evaluate: AI's response to this move
-            // - AI (maximizer) will try to maximize the score
-            // - Search one level deeper (depth + 1)
-            // - Pass alpha/beta bounds for pruning
-            int val = minimax_masks(playerMask, newOpp, depth + 1, alpha, beta, true);
-            
-            // Is this move worse (lower score) than our current best?
-            if (val < best) {
-                best = val;
-            }
-            
-            // Update beta (best score minimizer can guarantee)
-            // If we found something lower than beta, update it
-            beta = (val < beta) ? val : beta;
-            
-            // PRUNING CHECK: Alpha-Beta Cutoff
-            // If alpha >= beta, the maximizer (AI) will never allow
-            // this position because they have a better option elsewhere.
-            // No point exploring further moves in this branch.
-            if (alpha >= beta) {
-                break;  // Alpha cutoff - prune remaining moves
-            }
+            int val = minimax_masks(playerMask | bit, oppMask, depth + 1, alpha, beta, false);
+            if (val > best) best = val;
+            if (val > alpha) alpha = val;
+            if (alpha >= beta) break; // Beta cutoff
+        } else {
+            int val = minimax_masks(playerMask, oppMask | bit, depth + 1, alpha, beta, true);
+            if (val < best) best = val;
+            if (val < beta) beta = val;
+            if (alpha >= beta) break; // Alpha cutoff
         }
     }
-
-    // Return the best score achievable from this position
     return best;
 }
-
 
 // ============================================================================
 // PUBLIC API FUNCTION
 // ============================================================================
 
-/**
- * @brief Find the optimal move for AI using perfect minimax algorithm
- * 
- * HIGH-LEVEL ALGORITHM:
- * 1. Convert board from 2D array to bitboard representation
- * 2. Determine which player is AI (based on piece counts and aiSymbol)
- * 3. Try all empty positions
- * 4. For each position: run minimax to evaluate if AI plays there
- * 5. Return position with highest minimax score
- * 
- * MEMORY EFFICIENCY HIGHLIGHTS:
- * - Converts 9-byte board to 8-byte bitboards
- * - All recursive calls use bitboards (no board copying)
- * - Results in 50-100x less memory usage during search
- * 
- * @param board 3x3 character array of current game state
- * @param aiSymbol Character representing AI ('X' or 'O')
- * @return struct Move containing optimal row and column (0-2 each)
- */
-struct Move findBestMovePerfect(char board[3][3], char aiSymbol) {
-    // Step 1: Convert board to bitboard representation
+struct Move findBestMoveMinimax(char board[3][3], char aiSymbol, int errorRate) {
+    // 1. SETUP: Convert Board to Bitmasks
     int maskX = 0, maskO = 0;
     boardToMasks(board, &maskX, &maskO);
     
-    // Step 2: Use shared util to determine AI/Opponent masks
     int aiMask, oppMask;
     getPlayerMasks(maskX, maskO, aiSymbol, &aiMask, &oppMask);
     
     int occupied = aiMask | oppMask;
+    struct Move bestMove = { -1, -1 };
     
-    // Step 3: Search for the best move
-    int bestVal = -1000;               // Worst possible score initially
-    struct Move bestMove = { -1, -1 }; // Invalid move as default
-
-    // Step 4: Try all possible moves in strategic order
-    for (int mi = 0; mi < 9; ++mi) {
-        int pos = MOVE_ORDER[mi];  // Get position to try (0-8)
-        int bit = (1 << pos);       // Convert to bit mask
-        
-        // Skip if this cell is already occupied
-        if (occupied & bit) {
-            continue;
-        }
-
-        // Simulate AI playing at this position
-        int newAiMask = aiMask | bit;
-        
-        // Evaluate this move using minimax
-        // - Start at depth 1 (first move)
-        // - Alpha = -1000 (no lower bound yet)
-        // - Beta = 1000 (no upper bound yet)
-        // - isMax = false (opponent responds next, will minimize)
-        int moveVal = minimax_masks(newAiMask, oppMask, 1, -1000, 1000, false);
-
-        // Step 5: Update best move if this is better
-        if (moveVal > bestVal) {
-            bestVal = moveVal;
-            bestMove.row = pos / 3;  // Convert linear index to row
-            bestMove.col = pos % 3;  // Convert linear index to column
+    // 2. COLLECT AVAILABLE MOVES
+    int emptyCells[9];
+    int nEmpty = 0;
+    for (int i = 0; i < 9; ++i) {
+        if (!((occupied) & (1 << i))) {
+            emptyCells[nEmpty++] = i;
         }
     }
 
-    // Return the optimal move
+    if (nEmpty == 0) return bestMove;
+
+    // ========================================================================
+    // LOGIC: FORCED RANDOM MISTAKE (Imperfect Mode)
+    // ========================================================================
+    // If errorRate is > 0 (e.g., 20), we roll the dice.
+    // If we hit the error range, we return a RANDOM move immediately.
+    // This mimics a "brain freeze" or lack of attention.
+    if (errorRate > 0) {
+        int roll = rand() % 100; // 0 to 99
+        if (roll < errorRate) {
+            int randomIdx = rand() % nEmpty;
+            int pos = emptyCells[randomIdx];
+            bestMove.row = pos / 3;
+            bestMove.col = pos % 3;
+            return bestMove; // Exit Early
+        }
+    }
+
+    // ========================================================================
+    // LOGIC: PERFECT MINIMAX (With Randomized Ties)
+    // ========================================================================
+    // Instead of keeping just ONE best move, we keep a list of ALL moves
+    // that share the highest score. This prevents the AI from always picking
+    // the same spot (like Center) when multiple spots are equally good.
+    
+    int bestVal = -1000;
+    struct Move bestCandidates[9]; // Array to store equally good moves
+    int candidateCount = 0;
+
+    for (int mi = 0; mi < 9; ++mi) {
+        int pos = MOVE_ORDER[mi]; // Use strategic ordering for efficiency
+        int bit = (1 << pos);
+        
+        if (occupied & bit) continue;
+
+        // Run perfect minimax (depth 1, alpha-beta bounds)
+        int moveVal = minimax_masks(aiMask | bit, oppMask, 1, -1000, 1000, false);
+
+        // If we found a BETTER move, discard old candidates and start fresh
+        if (moveVal > bestVal) {
+            bestVal = moveVal;
+            candidateCount = 0; // Reset list
+            bestCandidates[candidateCount].row = pos / 3;
+            bestCandidates[candidateCount].col = pos % 3;
+            candidateCount++;
+        } 
+        // If we found an EQUAL move, add it to the list
+        else if (moveVal == bestVal) {
+            bestCandidates[candidateCount].row = pos / 3;
+            bestCandidates[candidateCount].col = pos % 3;
+            candidateCount++;
+        }
+    }
+
+    // 3. PICK A RANDOM MOVE FROM THE BEST CANDIDATES
+    // This ensures variety while maintaining optimal play.
+    if (candidateCount > 0) {
+        int randomIndex = rand() % candidateCount;
+        bestMove = bestCandidates[randomIndex];
+    }
+
     return bestMove;
 }

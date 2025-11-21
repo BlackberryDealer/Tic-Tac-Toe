@@ -324,11 +324,12 @@ void MakeAIMove(void)
     
     // Select AI algorithm based on difficulty setting
     if (game.difficulty == DIFF_HARD) {
-        // Perfect AI - unbeatable, uses alpha-beta pruning
-        bestMove = findBestMovePerfect(game.board, game.aiSymbol);
+        // Perfect AI: 0% Error Rate
+        bestMove = findBestMoveMinimax(game.board, game.aiSymbol, 0);
     } else if (game.difficulty == DIFF_MEDIUM) {
-        // Imperfect AI - makes mistakes, depth-limited minimax
-        bestMove = findBestMoveImperfect(game.board, game.aiSymbol);
+        // Imperfect AI: 20% Forced Randomness
+        // This is the "Forced Random Move" strategy
+        bestMove = findBestMoveMinimax(game.board, game.aiSymbol, 20);
     } else {  // DIFF_EASY
         // Model-based AI - uses logistic regression evaluation
         bestMove = findBestMoveModel(game.board);
@@ -435,15 +436,6 @@ bool LoadGame(void)
 
     // 4. Success! Now we can safely update the real 'game'
     game = tempGame;
-
-    // Reset dynamic pointers to prevent crashes
-    // (Pointers saved to disk are invalid when loaded back)
-    game.moveHistory = NULL;
-    game.moveCount = 0;
-    game.moveCapacity = 0;
-    game.gameHistory = NULL;
-    game.historyLineCount = 0;
-    game.historyCapacity = 0;
     
     // 5. Restore the user's active theme (as requested)
     game.currentTheme = currentThemeBeforeLoad;
@@ -453,11 +445,6 @@ bool LoadGame(void)
     // are not part of the GameState struct and were not loaded.
     ChangeTheme(game.currentTheme);
     
-    // 7. Restore sound effects
-    game.sfx.click     = LoadSound("resources/click.ogg");
-    game.sfx.win       = LoadSound("resources/win.ogg");
-    game.sfx.lose      = LoadSound("resources/lose.ogg");
-    game.sfx.draw      = LoadSound("resources/draw.ogg");
     return true;
 }
 
@@ -568,19 +555,4 @@ void ClearGameHistory(void) {
     game.historyLineCount = 0;
     game.historyCapacity = 0;
     game.historyScrollOffset = 0;
-}
-
-void DeleteSaveGame(void)
-{
-    // Try to delete "save.dat"
-    if (remove("save.dat") == 0) 
-    {
-        game.saveMessage = "Save Deleted!";
-        game.saveMessageTimer = 2.0f;
-    } 
-    else 
-    {
-        game.saveMessage = "No Save Found!";
-        game.saveMessageTimer = 2.0f;
-    }
 }
