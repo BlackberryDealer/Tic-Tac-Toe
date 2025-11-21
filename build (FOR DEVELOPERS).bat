@@ -12,8 +12,7 @@ gcc -o bin\TicTacToe.exe ^
     GUI_handlers\game_state.c ^
     GUI_handlers\screens.c ^
     GUI_handlers\ui.c ^
-    Game_algorithms\PERFECT_minimax.c ^
-    Game_algorithms\IMPERFECT_minimax.c ^
+    Game_algorithms\Minimax.c ^
     Game_algorithms\model_minimax.c ^
     Game_algorithms\minimax_utils.c ^
     -Ilib\raylib ^

@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gameboard.h"
-#include "minimax.h"
+#include "Game_algorithms/minimax.h"
 
 // Configuration
 #define NUM_GAMES 100000  // Must be even for equal start distribution
@@ -48,17 +48,17 @@ int play_game(int test_ai_mode, int test_ai_starts) {
         if (current_turn == TEST_AI_SYMBOL) {
             // --- TEST AI TURN (Playing as X) ---
             if (test_ai_mode == 1) {
-                move = findBestMovePerfect(tempBoard, TEST_AI_SYMBOL);
+                move = findBestMoveMinimax(tempBoard, TEST_AI_SYMBOL, 0);
             } else if (test_ai_mode == 2) {
-                move = findBestMoveImperfect(tempBoard, TEST_AI_SYMBOL);
+                move = findBestMoveMinimax(tempBoard, TEST_AI_SYMBOL, 20);
             } else if (test_ai_mode == 3) {
                 // Model AI is optimized for 'X'
                 move = findBestMoveModel(tempBoard);
             }
         } else {
             // --- BENCHMARK AI TURN (Playing as O) ---
-            // Uses Imperfect AI (Shallow Depth Minimax) as the benchmark
-            move = findBestMoveImperfect(tempBoard, BENCHMARK_AI_SYMBOL);
+            // Uses Imperfect AI with 10% chance of play error as the benchmark
+            move = findBestMoveMinimax(tempBoard, BENCHMARK_AI_SYMBOL, 10);
         }
         
         // Apply the move

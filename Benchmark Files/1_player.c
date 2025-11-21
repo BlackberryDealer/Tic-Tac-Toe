@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "1_player.h"
 #include "gameboard.h"
-#include "minimax.h"
+#include "Game_algorithms/minimax.h"
 
 // ============================================================================
 // CONSTANTS
@@ -102,10 +102,10 @@ void playOnePlayer()
             struct Move thisMove;
             if (difficulty == 1) {
                 // Perfect AI - unbeatable, uses alpha-beta pruning
-                thisMove = findBestMovePerfect(tempBoard, COMPUTERMOVE);
+                thisMove = findBestMoveMinimax(tempBoard, COMPUTERMOVE, 0);
             } else if (difficulty == 2) {
                 // Imperfect AI - makes mistakes, depth-limited
-                thisMove = findBestMoveImperfect(tempBoard, COMPUTERMOVE);
+                thisMove = findBestMoveMinimax(tempBoard, COMPUTERMOVE, 20);
             } else if (difficulty == 3) {
                 // Model-based AI - uses logistic regression
                 thisMove = findBestMoveModel(tempBoard);
