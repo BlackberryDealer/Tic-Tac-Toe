@@ -436,6 +436,15 @@ bool LoadGame(void)
 
     // 4. Success! Now we can safely update the real 'game'
     game = tempGame;
+
+       // Reset dynamic pointers to prevent crashes
+    // (Pointers saved to disk are invalid when loaded back)
+    game.moveHistory = NULL;
+    game.moveCount = 0;
+    game.moveCapacity = 0;
+    game.gameHistory = NULL;
+    game.historyLineCount = 0;
+    game.historyCapacity = 0;
     
     // 5. Restore the user's active theme (as requested)
     game.currentTheme = currentThemeBeforeLoad;
@@ -444,6 +453,12 @@ bool LoadGame(void)
     // This is necessary because the global Color... variables
     // are not part of the GameState struct and were not loaded.
     ChangeTheme(game.currentTheme);
+
+    // 7. Restore sound effects
+    game.sfx.click     = LoadSound("resources/click.ogg");
+    game.sfx.win       = LoadSound("resources/win.ogg");
+    game.sfx.lose      = LoadSound("resources/lose.ogg");
+    game.sfx.draw      = LoadSound("resources/draw.ogg");
     
     return true;
 }
