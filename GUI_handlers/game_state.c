@@ -556,3 +556,19 @@ void ClearGameHistory(void) {
     game.historyCapacity = 0;
     game.historyScrollOffset = 0;
 }
+
+
+void DeleteSaveGame(void)
+{
+    // Try to delete "save.dat"
+    if (remove("save.dat") == 0) 
+    {
+        game.saveMessage = "Save Deleted!";
+        game.saveMessageTimer = 2.0f;
+    } 
+    else 
+    {
+        game.saveMessage = "No Save Found!";
+        game.saveMessageTimer = 2.0f;
+    }
+}
