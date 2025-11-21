@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include "1_player.h"
 #include "gameboard.h"
-#include "Game_algorithms/minimax.h"
+#include "../Game_algorithms/minimax.h"
 
 // ============================================================================
 // CONSTANTS

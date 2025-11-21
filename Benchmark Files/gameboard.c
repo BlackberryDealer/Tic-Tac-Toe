@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gameboard.h"
-#include "Game_algorithms/minimax.h"
+#include "../Game_algorithms/minimax.h"
 
 // ============================================================================
 // BOARD DISPLAY FUNCTIONS

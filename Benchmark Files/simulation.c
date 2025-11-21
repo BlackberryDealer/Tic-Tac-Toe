@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "gameboard.h"
-#include "Game_algorithms/minimax.h"
+#include "../Game_algorithms/minimax.h"
 
 // Configuration
 #define NUM_GAMES 100000  // Must be even for equal start distribution
