@@ -303,6 +303,11 @@ void SaveGame(void);
 bool LoadGame(void);
 
 /**
+ * @brief Deletes the save file "save.dat" if it exists.
+ */
+void DeleteSaveGame(void);
+
+/**
  * @brief Appends the result of the completed game to "game_history.txt"
  */
 void AppendGameToHistory(void);

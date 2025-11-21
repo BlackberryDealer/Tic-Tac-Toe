@@ -92,6 +92,7 @@ void DrawStartScreen(void)
     // Define button rectangles (using the centering helper)
     Rectangle playButton = CreateButton(ScaleX(640), ScaleY(260), ScaleSize(250), ScaleSize(70));
     Rectangle loadButton = CreateButton(ScaleX(640), ScaleY(350), ScaleSize(250), ScaleSize(70));
+    Rectangle deleteButton = CreateButton(ScaleX(640 + 170), ScaleY(350), ScaleSize(60), ScaleSize(60));
     Rectangle instructionsButton = CreateButton(ScaleX(640 - 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
     Rectangle historyButton = CreateButton(ScaleX(640 + 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
     Rectangle fullscreenButton = CreateButton(ScaleX(640), ScaleY(530), ScaleSize(250), ScaleSize(60));
@@ -100,9 +101,18 @@ void DrawStartScreen(void)
     // Draw the buttons
     DrawButton(&playButton, "PLAY", colorSecondary);
     DrawButton(&loadButton, "LOAD GAME", colorAccent);
+    DrawButton(&deleteButton, "DEL", colorWarning);
     DrawButton(&instructionsButton, "INSTRUCTIONS", colorPrimary);
     DrawButton(&historyButton, "HISTORY", colorPrimary);
     DrawButton(&themesButton, "THEMES", colorDark);
+
+    if (game.saveMessageTimer > 0)
+    {
+        int msgSize = ScaleSize(20);
+        int textWidth = MeasureText(game.saveMessage, msgSize);
+        DrawText(game.saveMessage, ScaleX(640) - textWidth / 2, ScaleY(565), msgSize, colorAccent);
+    }
+
     
     // Fullscreen button text changes based on current state
     const char* fullscreenText = game.isFullscreen ? "WINDOWED MODE" : "FULLSCREEN";
@@ -111,9 +121,12 @@ void DrawStartScreen(void)
 
 void HandleStartScreen(void)
 {
+    if (game.saveMessageTimer > 0) game.saveMessageTimer -= GetFrameTime();
+
     // Re-create button rectangles to check for collisions
     Rectangle playButton = CreateButton(ScaleX(640), ScaleY(260), ScaleSize(250), ScaleSize(70));
     Rectangle loadButton = CreateButton(ScaleX(640), ScaleY(350), ScaleSize(250), ScaleSize(70));
+    Rectangle deleteButton = CreateButton(ScaleX(640 + 170), ScaleY(350), ScaleSize(60), ScaleSize(60));
     Rectangle instructionsButton = CreateButton(ScaleX(640 - 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
     Rectangle historyButton = CreateButton(ScaleX(640 + 130), ScaleY(440), ScaleSize(250), ScaleSize(70));
     Rectangle fullscreenButton = CreateButton(ScaleX(640), ScaleY(530), ScaleSize(250), ScaleSize(60));
@@ -133,6 +146,12 @@ void HandleStartScreen(void)
                 PlaySound(game.sfx.click); 
                 game.screen = SCREEN_GAME;
             }
+        }
+        else if (IsButtonHovered(&deleteButton))
+        {
+            PlaySound(game.sfx.click);
+            DeleteSaveGame(); 
+            // Note: We stay on the same screen, but the "Save Deleted" message will appear
         }
         else if (IsButtonHovered(&themesButton))
         {
@@ -617,7 +636,7 @@ void DrawGameScreen(void)
         int msgSize = ScaleSize(20);
         int textWidth = MeasureText(game.saveMessage, msgSize);
         Color msgColor = (strncmp(game.saveMessage, "ERROR", 5) == 0) ? colorAccent : colorSecondary;
-        DrawText(game.saveMessage, ScaleX(640) - textWidth / 2, ScaleY(555), msgSize, msgColor);
+        DrawText(game.saveMessage, ScaleX(640) - textWidth / 2, ScaleY(550), msgSize, msgColor);
     }
     
     // --- 5. Draw Undo Button (conditionally) ---
