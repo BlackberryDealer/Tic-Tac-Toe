@@ -123,30 +123,36 @@ void HandleStartScreen(void)
     {
         if (IsButtonHovered(playButton))
         {
+            PlaySound(game.sfx.click); 
             game.screen = SCREEN_MODE_SELECT;
         }
         else if (IsButtonHovered(loadButton))
         {
             if (LoadGame())
             {
+                PlaySound(game.sfx.click); 
                 game.screen = SCREEN_GAME;
             }
         }
         else if (IsButtonHovered(themesButton))
         {
+            PlaySound(game.sfx.click); 
             game.screen = SCREEN_THEME_SELECT;
         }
         else if (IsButtonHovered(instructionsButton))
         {
+            PlaySound(game.sfx.click); 
             game.screen = SCREEN_INSTRUCTIONS;
         }
         else if (IsButtonHovered(historyButton))
         {
+            PlaySound(game.sfx.click); 
             LoadGameHistory();
             game.screen = SCREEN_HISTORY;
         }
         else if (IsButtonHovered(fullscreenButton))
         {
+            PlaySound(game.sfx.click); 
             game.isFullscreen = !game.isFullscreen;
             if (game.isFullscreen)
             {
@@ -197,16 +203,19 @@ void HandleModeSelectScreen(void)
     {
         if (IsButtonHovered(onePlayerButton))
         {
+            PlaySound(game.sfx.click); 
             game.mode = MODE_ONE_PLAYER;
             game.screen = SCREEN_DIFFICULTY_SELECT;
         }
         else if (IsButtonHovered(twoPlayerButton))
         {
+            PlaySound(game.sfx.click); 
             game.mode = MODE_TWO_PLAYER;
             game.screen = SCREEN_SYMBOL_SELECT_2P;
         }
         else if (IsButtonHovered(backButton))
         {
+            PlaySound(game.sfx.click); 
             game.screen = SCREEN_START;
         }
     }
@@ -244,21 +253,25 @@ void HandleDifficultySelectScreen(void)
     {
         if (IsButtonHovered(easyButton))
         {
+            PlaySound(game.sfx.click); 
             game.difficulty = DIFF_EASY;
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
         else if (IsButtonHovered(mediumButton))
         {
+            PlaySound(game.sfx.click); 
             game.difficulty = DIFF_MEDIUM;
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
         else if (IsButtonHovered(hardButton))
         {
+            PlaySound(game.sfx.click); 
             game.difficulty = DIFF_HARD;
             game.screen = SCREEN_SYMBOL_SELECT_1P;
         }
         else if (IsButtonHovered(backButton))
         {
+            PlaySound(game.sfx.click); 
             game.screen = SCREEN_MODE_SELECT;
         }
     }
@@ -293,13 +306,11 @@ void HandleSymbolSelectScreen(bool isPlayer1)
     {
         if (IsButtonHovered(xButton))
         {
-            if (game.mode == MODE_ONE_PLAYER)
-            {
+            PlaySound(game.sfx.click); 
+            if (game.mode == MODE_ONE_PLAYER) {
                 game.humanSymbol = 'X';
                 game.aiSymbol = 'O';
-            }
-            else
-            {
+            } else {
                 game.humanSymbol = 'X';
             }
             ResetBoard();
@@ -307,13 +318,11 @@ void HandleSymbolSelectScreen(bool isPlayer1)
         }
         else if (IsButtonHovered(oButton))
         {
-            if (game.mode == MODE_ONE_PLAYER)
-            {
+            PlaySound(game.sfx.click); 
+            if (game.mode == MODE_ONE_PLAYER) {
                 game.humanSymbol = 'O';
                 game.aiSymbol = 'X';
-            }
-            else
-            {
+            } else {
                 game.humanSymbol = 'O';
             }
             ResetBoard();
@@ -321,12 +330,10 @@ void HandleSymbolSelectScreen(bool isPlayer1)
         }
         else if (IsButtonHovered(backButton))
         {
-            if (isPlayer1)
-            {
+            PlaySound(game.sfx.click);
+            if (isPlayer1) {
                 game.screen = SCREEN_MODE_SELECT;
-            }
-            else
-            {
+            } else {
                 game.screen = SCREEN_DIFFICULTY_SELECT;
             }
         }
@@ -385,12 +392,13 @@ void HandleInstructionsScreen(void)
     Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsButtonHovered(backButton))
     {
+        PlaySound(game.sfx.click); // <--- SOUND ADDED
         game.screen = SCREEN_START;
     }
 }
 
 // ============================================================================
-// GAME SCREEN
+// GAME SCREEN (FIXED LOGIC)
 // ============================================================================
 void DrawGameScreen(void)
 {
@@ -651,27 +659,32 @@ void DrawGameScreen(void)
 
 void HandleGameScreen(void)
 {
-    // 1. Update save message timer
-    if (game.saveMessageTimer > 0)
-    {
-        game.saveMessageTimer -= GetFrameTime();
-    }
+    // 1. Update Timer
+    if (game.saveMessageTimer > 0) game.saveMessageTimer -= GetFrameTime();
     
-    // 2. Handle Human Button Input
+    // 2. Get Mouse Status ONCE per frame to avoid conflict
+    bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+    Vector2 mousePos = GetMousePosition();
+    
+    // 3. Define Buttons
     Rectangle restartButton = CreateButton(ScaleX(640 - 170), ScaleY(595), ScaleSize(140), ScaleSize(50));
     Rectangle saveButton = CreateButton(ScaleX(640), ScaleY(595), ScaleSize(140), ScaleSize(50));
     Rectangle menuButton = CreateButton(ScaleX(640 + 170), ScaleY(595), ScaleSize(140), ScaleSize(50));
     Rectangle undoButton = CreateButton(ScaleX(640 + 270), ScaleY(215), ScaleSize(120), ScaleSize(50));
     
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    // 4. Handle Mouse Clicks (Buttons OR Board)
+    if (mouseClicked)
     {
+        // --- CHECK BUTTONS ---
         if (IsButtonHovered(restartButton))
         {
+            PlaySound(game.sfx.click); 
             ResetBoard();
             return;
         }
         else if (game.moveCount > 0 && IsButtonHovered(undoButton))
         {
+            PlaySound(game.sfx.click); 
             if (game.moveCount > 0)
             {
                 game.moveCount--;
@@ -686,117 +699,116 @@ void HandleGameScreen(void)
         }
         else if (IsButtonHovered(saveButton))
         {
+            PlaySound(game.sfx.click); 
             SaveGame();
             return;
         }
         else if (IsButtonHovered(menuButton))
         {
+            PlaySound(game.sfx.click); 
             game.screen = SCREEN_START;
             return;
         }
+        
+        // --- CHECK BOARD INPUT ---
+        // Only allowed if game is NOT over AND it's NOT the AI's turn
+        if (!game.gameOver && !(game.mode == MODE_ONE_PLAYER && game.aiTurn))
+        {
+            float boardSize = ScaleSize(360);
+            float boardX = ScaleX(640) - boardSize/2;
+            float boardY = ScaleY(180);
+            float cellSize = boardSize / 3;
+            
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    Rectangle cell = {
+                        boardX + j * cellSize, 
+                        boardY + i * cellSize,
+                        cellSize, 
+                        cellSize
+                    };
+                    
+                    if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
+                    {
+                        // Undo Saving
+                        if (game.moveCount >= game.moveCapacity) {
+                            int newCapacity = (game.moveCapacity == 0) ? 4 : game.moveCapacity * 2;
+                            MoveSnapshot *newHistory = (MoveSnapshot *)realloc(
+                                game.moveHistory,
+                                newCapacity * sizeof(MoveSnapshot)
+                            );
+                            if (newHistory != NULL) {
+                                game.moveHistory = newHistory;
+                                game.moveCapacity = newCapacity;
+                            } else goto skip_move_save; 
+                        }
+                        memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
+                        game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
+                        game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
+                        game.moveCount++;
+
+                        skip_move_save:
+                        
+                        // Place Symbol & Sound
+                        game.board[i][j] = game.currentPlayer;
+                        PlaySound(game.sfx.click);
+                        
+                        // Check Win/Draw
+                        if (CheckWinner(game.board) || IsBoardFull(game.board))
+                        {
+                            if (!game.gameOver) AppendGameToHistory();
+                            game.gameOver = true;
+                            game.screen = SCREEN_GAME_OVER;
+                            
+                            if (game.winner == ' ') {
+                                PlaySound(game.sfx.draw);
+                            } else {
+                                PlaySound(game.sfx.win);
+                            }
+                            return;
+                        }
+                        
+                        // Switch Turn
+                        if (game.mode == MODE_ONE_PLAYER)
+                        {
+                            game.aiTurn = true;
+                            game.aiMoveTimer = 0.5f;
+                        }
+                        else
+                        {
+                            game.currentPlayer = (game.currentPlayer == 'X') ? 'O' : 'X';
+                        }
+                        
+                        // IMPORTANT: Return immediately to stop processing this click
+                        return;
+                    }
+                }
+            }
+        }
     }
     
-    // 3. Stop all game logic if game is over
-    if (game.gameOver)
-    {
-        return;
-    }
-    
-    // 4. Handle AI Turn Logic
-    if (game.mode == MODE_ONE_PLAYER && game.aiTurn)
+    // 5. Handle AI Turn Logic (Runs automatically)
+    if (!game.gameOver && game.mode == MODE_ONE_PLAYER && game.aiTurn)
     {
         game.aiMoveTimer -= GetFrameTime();
         if (game.aiMoveTimer <= 0)
         {
             MakeAIMove();
+            PlaySound(game.sfx.click); 
+            
             game.aiTurn = false;
             if (CheckWinner(game.board) || IsBoardFull(game.board))
             {
-                if (!game.gameOver)
-                {
-                    AppendGameToHistory();
-                }
+                if (!game.gameOver) AppendGameToHistory();
                 game.gameOver = true;
                 game.screen = SCREEN_GAME_OVER;
-            }
-        }
-        return;
-    }
-    
-    // 5. Handle Human Board Clicks
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
-        float boardSize = ScaleSize(360);
-        float boardX = ScaleX(640) - boardSize/2;
-        float boardY = ScaleY(180);
-        float cellSize = boardSize / 3;
-        Vector2 mousePos = GetMousePosition();
-        
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                Rectangle cell = {
-                    boardX + j * cellSize, 
-                    boardY + i * cellSize,
-                    cellSize, 
-                    cellSize
-                };
                 
-                if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
-                {
-                    // Save state for undo
-                   // OPTIMIZATION: Dynamically allocate move history using realloc
-                    if (game.moveCount >= game.moveCapacity) {
-                        int newCapacity = (game.moveCapacity == 0) ? 4 : game.moveCapacity * 2;
-                        
-                        MoveSnapshot *newHistory = (MoveSnapshot *)realloc(
-                            game.moveHistory,
-                            newCapacity * sizeof(MoveSnapshot)
-                        );
-                        
-                        if (newHistory != NULL) {
-                            game.moveHistory = newHistory;
-                            game.moveCapacity = newCapacity;
-                        } else {
-                            goto skip_move_save;  // Allocation failed, skip saving this move
-                        }
-                    }
-
-                    // Save current state
-                    memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
-                    game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
-                    game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
-                    game.moveCount++;
-
-                    skip_move_save:
-                    
-                    // Place the current player's symbol
-                    game.board[i][j] = game.currentPlayer;
-                    
-                    // Check for Win/Draw
-                    if (CheckWinner(game.board) || IsBoardFull(game.board))
-                    {
-                        if (!game.gameOver)
-                        {
-                            AppendGameToHistory();
-                        }
-                        game.gameOver = true;
-                        game.screen = SCREEN_GAME_OVER;
-                        return;
-                    }
-                    
-                    // Switch Turns
-                    if (game.mode == MODE_ONE_PLAYER)
-                    {
-                        game.aiTurn = true;
-                        game.aiMoveTimer = 0.5f;
-                    }
-                    else
-                    {
-                        game.currentPlayer = (game.currentPlayer == 'X') ? 'O' : 'X';
-                    }
-                    break;
+                if (game.winner == ' ') {
+                    PlaySound(game.sfx.draw);
+                } else {
+                    PlaySound(game.sfx.lose); 
                 }
             }
         }
@@ -920,11 +932,13 @@ void HandleGameOverScreen(void)
     {
         if (IsButtonHovered(playAgainButton))
         {
+            PlaySound(game.sfx.click); // <--- SOUND ADDED
             ResetBoard();
             game.screen = SCREEN_GAME;
         }
         else if (IsButtonHovered(menuButton))
         {
+            PlaySound(game.sfx.click); // <--- SOUND ADDED
             game.screen = SCREEN_START;
             game.player1Wins = 0;
             game.player2Wins = 0;
@@ -975,30 +989,12 @@ void HandleThemeSelectScreen(void)
     
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
-        if (IsButtonHovered(defaultButton))
-        {
-            ChangeTheme(THEME_DEFAULT);
-        }
-        else if (IsButtonHovered(darkButton))
-        {
-            ChangeTheme(THEME_DARK);
-        }
-        else if (IsButtonHovered(forestButton))
-        {
-            ChangeTheme(THEME_FOREST);
-        }
-        else if (IsButtonHovered(spaceButton))
-        {
-            ChangeTheme(THEME_SPACE);
-        }
-        else if (IsButtonHovered(aquaticButton))
-        {
-            ChangeTheme(THEME_AQUATIC);
-        }
-        else if (IsButtonHovered(backButton))
-        {
-            game.screen = SCREEN_START;
-        }
+        if (IsButtonHovered(defaultButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_DEFAULT); }
+        else if (IsButtonHovered(darkButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_DARK); }
+        else if (IsButtonHovered(forestButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_FOREST); }
+        else if (IsButtonHovered(spaceButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_SPACE); }
+        else if (IsButtonHovered(aquaticButton)) { PlaySound(game.sfx.click); ChangeTheme(THEME_AQUATIC); }
+        else if (IsButtonHovered(backButton)) { PlaySound(game.sfx.click); game.screen = SCREEN_START; }
     }
 }
 
@@ -1091,11 +1087,13 @@ void HandleHistoryScreen(void)
     {
         if (IsButtonHovered(backButton))
         {
+            PlaySound(game.sfx.click); // <--- SOUND ADDED
             game.screen = SCREEN_START;
-            game.historyScrollOffset = 0; // Reset scroll when leaving
+            game.historyScrollOffset = 0; 
         }
         else if (game.historyLineCount > 0 && IsButtonHovered(clearButton))
         {
+            PlaySound(game.sfx.click); // <--- SOUND ADDED
             ClearGameHistory();
             game.historyScrollOffset = 0;
         }

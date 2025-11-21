@@ -114,6 +114,13 @@ typedef struct {
     bool aiTurn;
 } MoveSnapshot;
 
+typedef struct {
+    Sound click;
+    Sound win;
+    Sound lose;
+    Sound draw;
+} GameAudio;
+
 // ============================================================================
 // MAIN GAME STATE
 // ============================================================================
@@ -166,6 +173,7 @@ typedef struct {
     const char *saveMessage;    // Pointer to message string ("Game Saved!" or "Error")
     float saveMessageTimer;     // Countdown timer to hide the message
 
+    GameAudio sfx; // Sound effects
 
     // --- OPTIMIZED Undo System ---
     /**

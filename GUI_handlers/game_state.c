@@ -141,6 +141,12 @@ void InitGame(void)
     game.historyLineCount = 0;
     game.historyCapacity = 0;
     game.historyScrollOffset = 0;
+
+    // Load sound effects
+    game.sfx.click     = LoadSound("resources/click.ogg"); // Buttons & Inputs
+    game.sfx.win = LoadSound("resources/win.ogg");  // Win 1P
+    game.sfx.lose       = LoadSound("resources/lose.ogg"); // Lose 1P
+    game.sfx.draw      = LoadSound("resources/draw.ogg"); // Draw
     
     ChangeTheme(THEME_DEFAULT);
     ResetBoard();
@@ -169,6 +175,12 @@ void CleanupGame(void) {
     }
     game.historyLineCount = 0;
     game.historyCapacity = 0;
+
+    // Unload sound effects
+    UnloadSound(game.sfx.click);
+    UnloadSound(game.sfx.win);
+    UnloadSound(game.sfx.lose);
+    UnloadSound(game.sfx.draw);
 }
 
 // ============================================================================
