@@ -51,4 +51,7 @@ struct Move findBestMoveMinimax(char board[3][3], char aiSymbol, int errorRate);
  */
 struct Move findBestMoveModel(char board[3][3]);
 
+// Global for benchmarking
+extern int g_max_depth_reached;
+
 #endif // MINIMAX_H

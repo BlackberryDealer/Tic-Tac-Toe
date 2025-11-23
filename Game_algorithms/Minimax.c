@@ -13,6 +13,9 @@
 #include "minimax.h"
 #include "minimax_utils.h"
 
+// Global for benchmarking
+int g_max_depth_reached = 0;
+
 // ============================================================================
 // MINIMAX ALGORITHM (PRIVATE HELPER)
 // ============================================================================
@@ -25,6 +28,11 @@
 static int minimax_masks(int playerMask, int oppMask, int depth,
                          int alpha, int beta, bool isMax)
 {
+    // Track max depth for benchmarking
+    if (depth > g_max_depth_reached) {
+        g_max_depth_reached = depth;
+    }
+
     // 1. TERMINAL STATE CHECKS
     if (isWinnerMask(playerMask)) return 10 - depth;
     if (isWinnerMask(oppMask)) return -10 + depth;

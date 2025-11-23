@@ -1,0 +1,32 @@
+==================================================
+TIC-TAC-TOE AI BENCHMARK RESULTS
+==================================================
+
+TEST 1: Minimax (Hard/Perfect) - errorRate = 0
+----------------------------------------------
+Best Move: (2, 2)
+Total Time (10000 runs): 8.388000 seconds
+Avg Time per Move: 0.00083880 seconds (0.84 ms)
+Max Recursion Depth: 9
+Est. Stack Usage: ~576 bytes (assuming 64 bytes/frame)
+
+TEST 2: Minimax (Medium/Imperfect) - errorRate = 20
+---------------------------------------------------
+Best Move: (1, 2)
+Total Time (10000 runs): 6.709000 seconds
+Avg Time per Move: 0.00067090 seconds (0.67 ms)
+Max Recursion Depth: 9
+Est. Stack Usage: ~576 bytes
+
+TEST 3: Logistic Regression (Easy/Model)
+----------------------------------------
+Best Move: (1, 1)
+Total Time (10000 runs): 0.003000 seconds
+Avg Time per Move: 0.00000030 seconds (0.0003 ms)
+Max Recursion Depth: 0 (Iterative)
+Est. Stack Usage: Constant (Low)
+
+SUMMARY:
+- Logistic Regression is ~2800x faster than Minimax.
+- Minimax uses O(depth) memory (max depth 9), while Logistic Regression uses O(1) memory.
+- Minimax (Medium) is faster than Hard because it skips calculation 20% of the time.
