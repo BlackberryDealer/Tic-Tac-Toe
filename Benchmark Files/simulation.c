@@ -5,16 +5,19 @@
  * This program benchmarks the 3 AI difficulty modes (Perfect, Imperfect, Model)
  * against a shallow depth minimax AI (the Imperfect AI, depth=5).
  * It strictly alternates starting players to ensure a fair difficulty assessment.
+ *
+ * COMPILATION:
+ * gcc -o "Benchmark Files\simulation.exe" "Benchmark Files\simulation.c" "GUI_handlers\game_state.c" "Game_algorithms\Minimax.c" "Game_algorithms\model_minimax.c" "Game_algorithms\minimax_utils.c" -Ilib\raylib -Llib\raylib -lraylib -lopengl32 -lgdi32 -lwinmm -static -lm
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "gameboard.h"
+#include "../GUI_handlers/game_state.h"
 #include "../Game_algorithms/minimax.h"
 
 // Configuration
-#define NUM_GAMES 100000  // Must be even for equal start distribution
+#define NUM_GAMES 10000  // Must be even for equal start distribution
 #define TEST_AI_SYMBOL 'X'
 #define BENCHMARK_AI_SYMBOL 'O'
 
@@ -28,13 +31,24 @@
 int play_game(int test_ai_mode, int test_ai_starts) {
     // Initialize local board copy to prevent state leakage
     char board[3][3];
-    int moves[9]; // Required by initialise but not used here
-    initialise(board, moves);
+    
+    // Clear the board manually
+    for(int r=0; r<3; r++) {
+        for(int c=0; c<3; c++) {
+            board[r][c] = ' ';
+        }
+    }
+    
+    // Reset global game winner for this game context
+    game.winner = ' ';
     
     // Determine who moves first based on the function argument
     char current_turn = test_ai_starts ? TEST_AI_SYMBOL : BENCHMARK_AI_SYMBOL;
     
-    while (gameStatus(board) == GAME_ONGOING) {
+    // Loop until game over (Win or Draw)
+    // CheckWinner returns true if there is a winner and sets game.winner
+    // IsBoardFull returns true if draw and sets game.winner = ' '
+    while (!CheckWinner(board) && !IsBoardFull(board)) {
         struct Move move = {-1, -1};
         
         // Create a temporary board for AI functions (preserves original board safety)
@@ -82,36 +96,18 @@ int play_game(int test_ai_mode, int test_ai_starts) {
         current_turn = (current_turn == 'X') ? 'O' : 'X';
     }
     
-    // Determine Result
-    GameStatus status = gameStatus(board);
-    if (status == GAME_WIN) {
-        // If the game ended in a win, the "current_turn" has already switched to the loser
-        // So the winner is the previous player.
-        // Actually, gameStatus checks the board. We need to see who has 3 in a row.
-        
-        // Helper check specifically for symbols
-        int x_wins = 0, o_wins = 0;
-        // Check rows/cols/diags manually to be sure or use helper logic if gameStatus doesn't return winner
-        // Since gameStatus returns GAME_WIN, we check who actually won.
-        // (Re-using simple win check logic for safety as gameStatus return value is generic)
-        
-        // Check if Test AI (X) won
-        for(int i=0; i<3; i++) {
-            if(board[i][0]=='X' && board[i][1]=='X' && board[i][2]=='X') x_wins=1;
-            if(board[0][i]=='X' && board[1][i]=='X' && board[2][i]=='X') x_wins=1;
-        }
-        if(board[0][0]=='X' && board[1][1]=='X' && board[2][2]=='X') x_wins=1;
-        if(board[0][2]=='X' && board[1][1]=='X' && board[2][0]=='X') x_wins=1;
-
-        if(x_wins) return 1;
-        else return -1; // If GAME_WIN and X didn't win, O must have won
-    }
+    // Determine Result based on game.winner set by CheckWinner/IsBoardFull
+    if (game.winner == TEST_AI_SYMBOL) return 1;
+    if (game.winner == BENCHMARK_AI_SYMBOL) return -1;
     
     return 0; // Draw
 }
 
 int main() {
     srand(time(NULL)); // Seed RNG for Imperfect AI randomness
+    
+    // Initialize minimal game state required for CheckWinner/IsBoardFull
+    game.mode = MODE_TWO_PLAYER; // Use 2P mode so stats update for X and O generically
     
     // Ensure even number of games for equal starts
     int total_games = NUM_GAMES;
