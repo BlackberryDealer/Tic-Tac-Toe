@@ -35,19 +35,8 @@ echo.
 REM Create output directory
 if not exist "bin" mkdir bin
 
-REM Compile all source files with static linking
-gcc -o bin\TicTacToe.exe ^
-    main.c ^
-    GUI_handlers\game_state.c ^
-    GUI_handlers\screens.c ^
-    GUI_handlers\ui.c ^
-    Game_algorithms\Minimax.c ^
-    Game_algorithms\model_minimax.c ^
-    Game_algorithms\minimax_utils.c ^
-    -Ilib\raylib ^
-    -Llib\raylib ^
-    -lraylib -lopengl32 -lgdi32 -lwinmm ^
-    -static -lm
+REM Compile all source files with static linking (Single line to avoid batch errors)
+gcc -o bin\TicTacToe.exe main.c GUI_handlers\game_state.c GUI_handlers\screens.c GUI_handlers\ui.c Game_algorithms\Minimax.c Game_algorithms\model_minimax.c Game_algorithms\minimax_utils.c -Ilib\raylib -Llib\raylib -lraylib -lopengl32 -lgdi32 -lwinmm -static -lm
 
 if %errorlevel% equ 0 (
     echo.
@@ -108,19 +97,8 @@ echo.
 REM Create output directory
 if not exist "bin" mkdir bin
 
-REM Compile all source files with static linking
-gcc -o bin\TicTacToe.exe ^
-    main.c ^
-    GUI_handlers\game_state.c ^
-    GUI_handlers\screens.c ^
-    GUI_handlers\ui.c ^
-    Game_algorithms\Minimax.c ^
-    Game_algorithms\model_minimax.c ^
-    Game_algorithms\minimax_utils.c ^
-    -Ilib\raylib ^
-    -Llib\raylib ^
-    -lraylib -lopengl32 -lgdi32 -lwinmm ^
-    -static -lm
+REM Compile all source files with static linking (Single line to avoid batch errors)
+gcc -o bin\TicTacToe.exe main.c GUI_handlers\game_state.c GUI_handlers\screens.c GUI_handlers\ui.c Game_algorithms\Minimax.c Game_algorithms\model_minimax.c Game_algorithms\minimax_utils.c -Ilib\raylib -Llib\raylib -lraylib -lopengl32 -lgdi32 -lwinmm -static -lm
 
 if %errorlevel% equ 0 (
     echo.
