@@ -1,7 +1,7 @@
 /**
  * @file minimax.h
  * @brief Minimax AI algorithms for Tic-Tac-Toe
- * 
+ *
  * This module provides three different AI implementations using minimax
  * algorithms with varying levels of play strength. All implementations
  * use bitboard representations internally for efficient game state evaluation.
@@ -19,8 +19,8 @@
  * @brief Represents a move on the game board
  */
 struct Move {
-    int row;    /**< Row index (0-2) */
-    int col;    /**< Column index (0-2) */
+  int row; /**< Row index (0-2) */
+  int col; /**< Column index (0-2) */
 };
 
 // ============================================================================
@@ -41,11 +41,11 @@ struct Move findBestMoveMinimax(char board[3][3], char aiSymbol, int errorRate);
 
 /**
  * @brief Find the best move using model-based evaluation
- * 
+ *
  * Uses a trained logistic regression model to evaluate board positions.
  * Makes different types of mistakes compared to imperfect minimax.
  * Good for easy difficulty.
- * 
+ *
  * @param board 3x3 game board (char array)
  * @return Move structure with the best move coordinates
  */

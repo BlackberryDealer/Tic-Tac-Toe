@@ -15,10 +15,12 @@ echo ----------------------------------------------------------------
 
 gcc -o "bin\benchmark.exe" ^
     "Benchmark Files\benchmark.c" ^
+    "Benchmark Files\benchmark_algorithms.c" ^
     "Game_algorithms\Minimax.c" ^
     "Game_algorithms\minimax_utils.c" ^
     "Game_algorithms\model_minimax.c" ^
     -I"Game_algorithms" ^
+    -I"Benchmark Files" ^
     -static -lm
 
 if %errorlevel% neq 0 (
