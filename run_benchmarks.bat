@@ -62,12 +62,6 @@ if %errorlevel% neq 0 (
 echo [SUCCESS] simulation.exe created in bin\
 echo.
 
-REM Copy required JSON file if it exists
-if exist "Game_algorithms\logistic_regression_params.json" (
-    copy /Y "Game_algorithms\logistic_regression_params.json" "bin\" >nul
-    echo [INFO] Copied logistic_regression_params.json to bin\
-    echo.
-)
 
 echo ================================================================
 echo   COMPILATION COMPLETE!
