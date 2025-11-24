@@ -395,7 +395,7 @@ void DrawInstructionsScreen(void)
     }
 
     // 2. DRAW TITLE
-    const char* title = "HOW TO WIN";
+    const char* title = "INSTRUCTIONS";
     int titleSize = ScaleSize(60);
     int titleWidth = MeasureText(title, titleSize);
     DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(60), titleSize, colorPrimary);
