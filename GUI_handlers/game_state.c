@@ -142,6 +142,10 @@ void InitGame(void)
     game.historyCapacity = 0;
     game.historyScrollOffset = 0;
 
+    // INITIALIZE SIMULATION
+    game.simTimer = 0.0f;
+    game.simStep = 0;
+
     // Load sound effects
     game.sfx.click     = LoadSound("resources/click.ogg"); // Buttons & Inputs
     game.sfx.win = LoadSound("resources/win.ogg");  // Win 1P

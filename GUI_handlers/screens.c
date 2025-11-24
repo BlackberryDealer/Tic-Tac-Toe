@@ -362,56 +362,153 @@ void HandleSymbolSelectScreen(bool isPlayer1)
 // ============================================================================
 // INSTRUCTIONS SCREEN
 // ============================================================================
+
+
+// ... inside screens.c ...
+
+// ============================================================================
+// INSTRUCTIONS SCREEN (WITH SIMULATION)
+// ============================================================================
+
+// Define the 8 winning patterns (Row, Col) for the simulation
+// 0-2 = Rows, 3-5 = Cols, 6-7 = Diagonals
+static const int WIN_PATTERNS[8][3][2] = {
+    {{0,0}, {0,1}, {0,2}}, // Row 1
+    {{1,0}, {1,1}, {1,2}}, // Row 2
+    {{2,0}, {2,1}, {2,2}}, // Row 3
+    {{0,0}, {1,0}, {2,0}}, // Col 1
+    {{0,1}, {1,1}, {2,1}}, // Col 2
+    {{0,2}, {1,2}, {2,2}}, // Col 3
+    {{0,0}, {1,1}, {2,2}}, // Top-Left to Bottom-Right
+    {{0,2}, {1,1}, {2,0}}  // Top-Right to Bottom-Left
+};
+
 void DrawInstructionsScreen(void)
 {
-    const char* title = "INSTRUCTIONS";
+    // 1. UPDATE ANIMATION TIMER
+    // Switch pattern every 1.5 seconds
+    game.simTimer += GetFrameTime();
+    if (game.simTimer > 3.0f) {
+        game.simTimer = 0.0f;
+        game.simStep++;
+        if (game.simStep > 7) game.simStep = 0; // Loop back to start
+    }
+
+    // 2. DRAW TITLE
+    const char* title = "HOW TO WIN";
     int titleSize = ScaleSize(60);
     int titleWidth = MeasureText(title, titleSize);
-    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(50), titleSize, colorPrimary);
+    DrawText(title, ScaleX(640) - titleWidth/2, ScaleY(60), titleSize, colorPrimary);
+
+    // 3. DRAW LEFT SIDE (Simple Text Explanations)
+    float leftX = ScaleX(200);
+    float textY = ScaleY(180);
+    int textSize = ScaleSize(24);
     
-    float boxWidth = ScaleSize(600);
-    float boxHeight = ScaleSize(380);
-    float boxX = ScaleX(640) - boxWidth/2;
-    float boxY = ScaleY(130);
-    float textX = boxX + ScaleSize(20);
+    DrawText("OBJECTIVE:", leftX, textY, textSize, colorAccent);
+    DrawText("Get 3 of the same symbols in a row.", leftX, textY + 35, textSize, colorDark);
     
-    DrawRectangleRec((Rectangle){boxX, boxY, boxWidth, boxHeight}, colorLight);
-    DrawRectangleLinesEx((Rectangle){boxX, boxY, boxWidth, boxHeight}, ScaleSize(3), colorPrimary);
+    DrawText("HOW TO WIN:", leftX, textY + 100, textSize, colorAccent);
+    DrawText("- Horizontal (Rows)", leftX, textY + 135, textSize, colorDark);
+    DrawText("- Vertical (Columns)", leftX, textY + 170, textSize, colorDark);
+    DrawText("- Diagonal", leftX, textY + 205, textSize, colorDark);
     
-    const char* instructions[] = {
-        "HOW TO PLAY:",
-        "",
-        "1. Players take turns placing their symbol (X or O)",
-        "   on a 3x3 grid.",
-        "",
-        "2. The first player to get 3 of their symbols in",
-        "   a row (horizontally, vertically, or diagonally)",
-        "   wins the game.",
-        "",
-        "3. If all 9 squares are filled and no player has",
-        "   3 in a row, the game is a 'draw'.",
-        "",
-        "Click on an empty square to place your symbol!"
-    };
-    
-    float yPos = boxY + ScaleSize(20);
-    int textSize = ScaleSize(22);
-    for (int i = 0; i < 13; i++)
+    DrawText("CONTROLS:", leftX, textY + 280, textSize, colorAccent);
+    DrawText("Click on the empty squares", leftX, textY + 315, textSize, colorDark);
+    DrawText("to place your mark!", leftX, textY + 350, textSize, colorDark);
+
+    // 4. DRAW RIGHT SIDE (The Simulation Board)
+    float simSize = ScaleSize(350);
+    float simX = ScaleX(800); // Shifted to the right side
+    float simY = ScaleY(160);
+    float simCell = simSize / 3;
+
+    // Draw Board Background
+    DrawRectangleRec((Rectangle){simX - 10, simY - 10, simSize + 20, simSize + 20}, colorLight);
+    DrawRectangleLinesEx((Rectangle){simX - 10, simY - 10, simSize + 20, simSize + 20}, ScaleSize(3), colorPrimary);
+
+    // Draw Grid Lines
+    for(int i=1; i<3; i++) {
+        DrawLineEx((Vector2){simX + i*simCell, simY}, (Vector2){simX + i*simCell, simY+simSize}, ScaleSize(4), colorDark);
+        DrawLineEx((Vector2){simX, simY + i*simCell}, (Vector2){simX+simSize, simY + i*simCell}, ScaleSize(4), colorDark);
+    }
+
+    // Draw The "Ghost" X's based on current step
+    for (int i = 0; i < 3; i++) {
+        int r = WIN_PATTERNS[game.simStep][i][0];
+        int c = WIN_PATTERNS[game.simStep][i][1];
+        
+        float x = simX + c * simCell + simCell/2;
+        float y = simY + r * simCell + simCell/2;
+        float offset = simCell * 0.25f;
+        
+        // Draw X
+        DrawLineEx((Vector2){x - offset, y - offset}, (Vector2){x + offset, y + offset}, ScaleSize(8), colorSecondary);
+        DrawLineEx((Vector2){x + offset, y - offset}, (Vector2){x - offset, y + offset}, ScaleSize(8), colorSecondary);
+    }
+
+ // Draw The Winning Red Line (Blinking effect)
+    if ((int)(game.simTimer * 2) % 2 == 0) 
     {
-        DrawText(instructions[i], textX, yPos, textSize, colorDark);
-        yPos += ScaleSize(28);
+        int startR = WIN_PATTERNS[game.simStep][0][0];
+        int startC = WIN_PATTERNS[game.simStep][0][1];
+        int endR   = WIN_PATTERNS[game.simStep][2][0];
+        int endC   = WIN_PATTERNS[game.simStep][2][1];
+
+        // 1. Calculate Center Points (Original Logic)
+        Vector2 start = {simX + startC*simCell + simCell/2, simY + startR*simCell + simCell/2};
+        Vector2 end   = {simX + endC*simCell + simCell/2,   simY + endR*simCell + simCell/2};
+
+        // 2. NEW: EXTEND THE LINE
+        // This extends the line by 40% of a cell size in both directions
+        float extension = simCell * 0.40f; 
+
+        if (game.simStep < 3) { 
+            // HORIZONTAL (Rows): Stretch Left and Right
+            start.x -= extension;
+            end.x += extension;
+        }
+        else if (game.simStep < 6) { 
+            // VERTICAL (Cols): Stretch Up and Down
+            start.y -= extension;
+            end.y += extension;
+        }
+        else if (game.simStep == 6) { 
+            // DIAGONAL (Top-Left to Bottom-Right)
+            start.x -= extension; start.y -= extension;
+            end.x += extension;   end.y += extension;
+        }
+        else { 
+            // DIAGONAL (Top-Right to Bottom-Left)
+            start.x += extension; start.y -= extension;
+            end.x -= extension;   end.y += extension;
+        }
+        
+        // 3. Draw the extended line
+        DrawLineEx(start, end, ScaleSize(12), colorAccent);
     }
     
-    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
+    // Draw Label under board
+    const char* label = "Watching: Simulation...";
+    if (game.simStep < 3) label = "Example: HORIZONTAL WIN";
+    else if (game.simStep < 6) label = "Example: VERTICAL WIN";
+    else label = "Example: DIAGONAL WIN";
+    
+    int labelW = MeasureText(label, ScaleSize(20));
+    DrawText(label, simX + simSize/2 - labelW/2, simY + simSize + 20, ScaleSize(20), colorAccent);
+
+    // 5. BACK BUTTON
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(600), ScaleSize(200), ScaleSize(50));
     DrawButton(&backButton, "BACK", colorPrimary);
 }
 
 void HandleInstructionsScreen(void)
 {
-    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(540), ScaleSize(200), ScaleSize(50));
+    // ... (This function remains exactly as it is in your uploaded file) ...
+    Rectangle backButton = CreateButton(ScaleX(640), ScaleY(600), ScaleSize(200), ScaleSize(50)); // Adjusted Y to match draw
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsButtonHovered(&backButton))
     {
-        PlaySound(game.sfx.click); // <--- SOUND ADDED
+        PlaySound(game.sfx.click); 
         game.screen = SCREEN_START;
     }
 }

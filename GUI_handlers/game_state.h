@@ -215,6 +215,13 @@ typedef struct {
     
     // Tracks the scroll position (index of the top visible line)
     int historyScrollOffset; 
+
+    // Timer to control animation speed
+    float simTimer;      
+
+    // Which winning pattern to show (0 to 7)
+    int simStep;      
+        
 } GameState;
 
 // ============================================================================
