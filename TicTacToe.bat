@@ -66,13 +66,14 @@ echo   Running Tic-Tac-Toe Game
 echo ============================================
 echo.
 
-if not exist "bin\TicTacToe.exe" (
-    echo ERROR: Executable not found!
-    echo Please build the game first (Option 1).
-    pause
-    goto menu
-)
+if exist "bin\TicTacToe.exe" goto start_game
 
+echo ERROR: Executable not found!
+echo Please build the game first (Option 1).
+pause
+goto menu
+
+:start_game
 REM Run the game from bin directory
 cd bin
 TicTacToe.exe
