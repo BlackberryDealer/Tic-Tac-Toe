@@ -1,3 +1,6 @@
+// Compilation command:
+// gcc -o benchmark benchmark.c ../Game_algorithms/Minimax.c ../Game_algorithms/minimax_utils.c ../Game_algorithms/model_minimax.c -I../Game_algorithms -lm
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
