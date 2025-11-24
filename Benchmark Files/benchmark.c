@@ -14,7 +14,6 @@ int main() {
   printf("TIC-TAC-TOE AI BENCHMARK SUITE\n");
   printf("==================================================\n");
   printf("Running all benchmarks...\n");
-  printf("Please wait (Total time: approx 3-5 minutes)\n");
   printf("==================================================\n\n");
 
   // Setup Empty Board (Worst Case for Search)
