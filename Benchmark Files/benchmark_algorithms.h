@@ -1,53 +1,57 @@
-/**
- * @file benchmark_algorithms.h
- * @brief Benchmark-specific Minimax Implementations
- *
- * This file contains variations of the Minimax algorithm used solely for
- * benchmarking purposes (e.g., array-based, no alpha-beta pruning).
- * These are NOT used in the actual game.
- */
+// Benchmark-specific Minimax implementations (not used in actual game)
 
 #ifndef BENCHMARK_ALGORITHMS_H
 #define BENCHMARK_ALGORITHMS_H
 
-#include "../Game_algorithms/minimax.h" // For struct Move
+#include "../Game_algorithms/minimax.h"
 
 // ============================================================================
-// ARRAY-BASED IMPLEMENTATIONS
+// ARRAY-BASED MINIMAX IMPLEMENTATIONS
 // ============================================================================
 
 /**
- * @brief Find the best move using standard array-based Minimax (No Bitboard).
- * * Uses Alpha-Beta Pruning.
- * @param board 3x3 game board (char array)
- * @param aiSymbol The symbol the AI is playing ('X' or 'O')
- * @param errorRate Percentage chance (0-100) to make a random random move.
- * @return Move structure with the best move coordinates
+ * Array-based Minimax WITH Alpha-Beta Pruning
+ *
+ * Uses traditional 2D array to represent the board instead of bitboard.
+ * Includes Alpha-Beta pruning optimization for faster search.
+ *
+ * @param board      3x3 character array (' ' = empty, 'X' or 'O' = occupied)
+ * @param aiSymbol   The symbol AI is playing as ('X' or 'O')
+ * @param errorRate  Percentage (0-100) chance AI makes a random move instead
+ *                   of optimal move. Use 0 for perfect play, >0 for imperfect.
+ * @return Move structure containing {row, col} of best move
  */
 struct Move findBestMoveMinimax_NoBitboard(char board[3][3], char aiSymbol,
                                            int errorRate);
 
 /**
- * @brief Find the best move using standard array-based Minimax WITHOUT Pruning.
- * * Used for benchmarking comparison (Slowest).
- * @param board 3x3 game board (char array)
- * @param aiSymbol The symbol the AI is playing ('X' or 'O')
- * @return Move structure with the best move coordinates
+ * Array-based Minimax WITHOUT any optimizations (slowest)
+ *
+ * Uses traditional 2D array with NO Alpha-Beta pruning.
+ * Used to benchmark the performance impact of pruning optimization.
+ *
+ * @param board     3x3 character array (' ' = empty, 'X' or 'O' = occupied)
+ * @param aiSymbol  The symbol AI is playing as ('X' or 'O')
+ * @return Move structure containing {row, col} of best move
  */
 struct Move findBestMoveMinimax_NoBitboard_NoPruning(char board[3][3],
                                                      char aiSymbol);
 
 // ============================================================================
-// BITBOARD-BASED IMPLEMENTATIONS (UNOPTIMIZED)
+// BITBOARD-BASED MINIMAX IMPLEMENTATIONS
 // ============================================================================
 
 /**
- * @brief Find the best move using Minimax WITHOUT Alpha-Beta Pruning.
- * * Used for benchmarking to show the efficiency gain of pruning.
- * @param board 3x3 game board (char array)
- * @param aiSymbol The symbol the AI is playing ('X' or 'O')
- * @return Move structure with the best move coordinates
+ * Bitboard-based Minimax WITHOUT Alpha-Beta Pruning
+ *
+ * Uses efficient bitboard representation but NO Alpha-Beta pruning.
+ * Used to benchmark the performance impact of pruning on bitboard version.
+ *
+ * @param board     3x3 character array (' ' = empty, 'X' or 'O' = occupied)
+ *                  Converted internally to bitboard representation
+ * @param aiSymbol  The symbol AI is playing as ('X' or 'O')
+ * @return Move structure containing {row, col} of best move
  */
 struct Move findBestMoveMinimax_NoAlphaBeta(char board[3][3], char aiSymbol);
 
-#endif // BENCHMARK_ALGORITHMS_H
+#endif

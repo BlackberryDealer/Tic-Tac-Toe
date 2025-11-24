@@ -1,6 +1,13 @@
 /**
  * @file benchmark_algorithms.c
- * @brief Implementation of Benchmark-specific Algorithms
+ * @brief Benchmark-specific Minimax Implementations
+ *
+ * This file contains alternative Minimax implementations used solely for
+ * performance benchmarking. These variations help measure the impact of:
+ * - Alpha-Beta pruning optimization
+ * - Bitboard vs Array data structures
+ *
+ * IMPORTANT: These are NOT used in the actual game - only for testing.
  */
 
 #include "benchmark_algorithms.h"
@@ -44,19 +51,33 @@ static bool isBoardFull(char board[3][3]) {
 }
 
 // ============================================================================
-// ARRAY-BASED MINIMAX (WITH ALPHA-BETA)
+// ARRAY-BASED MINIMAX (WITH ALPHA-BETA PRUNING)
 // ============================================================================
 
+/**
+ * Core Minimax algorithm with Alpha-Beta pruning using array representation.
+ *
+ * Alpha-Beta pruning reduces the number of nodes evaluated by eliminating
+ * branches that cannot affect the final decision. This optimization can
+ * reduce search time from O(b^d) to O(b^(d/2)) where b is branching factor
+ * and d is search depth.
+ *
+ * @param alpha - Best value maximizer can guarantee (lower bound for max)
+ * @param beta - Best value minimizer can guarantee (upper bound for min)
+ * @return Score for the board position (-10 to +10)
+ */
 static int minimax_array(char board[3][3], int depth, bool isMax, int alpha,
                          int beta, char aiSymbol, char humanSymbol) {
+  // Terminal state checks
   if (checkWin(board, aiSymbol))
-    return 10 - depth;
+    return 10 - depth; // AI wins (prefer shorter paths to victory)
   if (checkWin(board, humanSymbol))
-    return depth - 10;
+    return depth - 10; // Human wins (prefer longer defensive paths)
   if (isBoardFull(board))
-    return 0;
+    return 0; // Draw
 
   if (isMax) {
+    // Maximizing player (AI) - trying to maximize score
     int best = -1000;
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
@@ -64,13 +85,14 @@ static int minimax_array(char board[3][3], int depth, bool isMax, int alpha,
           board[i][j] = aiSymbol;
           int val = minimax_array(board, depth + 1, !isMax, alpha, beta,
                                   aiSymbol, humanSymbol);
-          board[i][j] = ' ';
+          board[i][j] = ' '; // Undo move
+
           if (val > best)
             best = val;
           if (val > alpha)
-            alpha = val;
+            alpha = val; // Update best guaranteed value for maximizer
           if (beta <= alpha)
-            break;
+            break; // Beta cutoff: minimizer found better option elsewhere
         }
       }
       if (beta <= alpha)
@@ -78,6 +100,7 @@ static int minimax_array(char board[3][3], int depth, bool isMax, int alpha,
     }
     return best;
   } else {
+    // Minimizing player (Human) - trying to minimize score
     int best = 1000;
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
@@ -85,13 +108,14 @@ static int minimax_array(char board[3][3], int depth, bool isMax, int alpha,
           board[i][j] = humanSymbol;
           int val = minimax_array(board, depth + 1, !isMax, alpha, beta,
                                   aiSymbol, humanSymbol);
-          board[i][j] = ' ';
+          board[i][j] = ' '; // Undo move
+
           if (val < best)
             best = val;
           if (val < beta)
-            beta = val;
+            beta = val; // Update best guaranteed value for minimizer
           if (beta <= alpha)
-            break;
+            break; // Alpha cutoff: maximizer found better option elsewhere
         }
       }
       if (beta <= alpha)
