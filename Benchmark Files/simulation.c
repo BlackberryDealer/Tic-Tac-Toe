@@ -2,9 +2,7 @@
  * @file simulation.c
  * @brief Benchmark simulation for AI difficulty modes
  *
- * This program benchmarks the 3 AI difficulty modes (Perfect, Imperfect, Model)
- * against a shallow depth minimax AI (the Imperfect AI, depth=5).
- * It strictly alternates starting players to ensure a fair difficulty assessment.
+
  *
  * COMPILATION:
  * gcc -o "Benchmark Files\simulation.exe" "Benchmark Files\simulation.c" "GUI_handlers\game_state.c" "Game_algorithms\Minimax.c" "Game_algorithms\model_minimax.c" "Game_algorithms\minimax_utils.c" -Ilib\raylib -Llib\raylib -lraylib -lopengl32 -lgdi32 -lwinmm -static -lm
@@ -116,7 +114,7 @@ int main() {
     printf("================================================================\n");
     printf("AI DIFFICULTY BENCHMARK SIMULATION\n");
     printf("----------------------------------------------------------------\n");
-    printf("Opponent: Shallow Depth Minimax (Imperfect AI, Depth=5)\n");
+    printf("Opponent: Minimax (Imperfect AI, 20%% error rate)\n");
     printf("Total Games: %d (%d starts each)\n", total_games, total_games/2);
     printf("Test AI: 'X' | Benchmark AI: 'O'\n");
     printf("================================================================\n\n");
