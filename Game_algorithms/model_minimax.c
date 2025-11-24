@@ -43,23 +43,6 @@
 
 /**
  * @brief Pre-trained logistic regression weights for each board position
- * 
- * These 9 weights correspond to the 9 board positions in row-major order:
- * 
- *   Board Layout:          Weight Index:
- *   [0][0] [0][1] [0][2]   weights[0] weights[1] weights[2]
- *   [1][0] [1][1] [1][2]   weights[3] weights[4] weights[5]
- *   [2][0] [2][1] [2][2]   weights[6] weights[7] weights[8]
- * 
- * WEIGHT INTERPRETATION:
- * - These values were learned from training data (logistic_regression_params.json)
- * - Each weight represents the "importance" or "strategic value" of that position
- * - Notice weights[4] = 4.313 (center) is the highest, indicating the model
- *   learned that the center position is most strategically valuable
- * - Corner positions (0,2,6,8) have weights around 3.9-4.0
- * - Edge positions (1,3,5,7) have weights around 3.6-3.7
- * 
- * This matches tic-tac-toe strategy: center and corners are stronger positions!
  */
 const double LR_WEIGHTS[9] = {
     3.928391392624212,      // Top-left corner [0][0]
@@ -75,15 +58,6 @@ const double LR_WEIGHTS[9] = {
 
 /**
  * @brief Pre-trained logistic regression bias term (intercept)
- * 
- * BIAS EXPLANATION:
- * - The bias is a constant added to the weighted sum
- * - It shifts the decision boundary of the classifier
- * - Negative bias (-1.645) means the model needs positive evidence
- *   (X positions with positive weights) to consider a board favorable
- * - Without this bias, an empty board would score 0. With bias, it
- *   scores -1.645, meaning the model is initially "pessimistic" and
- *   needs X pieces to make the evaluation positive
  */
 const double LR_BIAS = -1.6450287057758302;
 
@@ -98,33 +72,7 @@ const double LR_BIAS = -1.6450287057758302;
  * 
  *   score = Σ(feature_i × weight_i) + bias
  * 
- * WHERE:
- *   - feature_i = +1 if position i has 'X' (AI's piece)
- *   - feature_i = -1 if position i has 'O' (opponent's piece)
- *   - feature_i = 0 if position i is empty
- *   - weight_i = learned importance of position i
- *   - bias = learned offset term
  * 
- * HOW LOGISTIC REGRESSION WORKS HERE:
- * ===================================
- * 1. The function computes a LINEAR COMBINATION of board features
- * 2. Each 'X' adds (weight × 1) to the score = makes score more positive
- * 3. Each 'O' adds (weight × -1) to the score = makes score more negative
- * 4. Higher positive scores = board looks better for X (the AI)
- * 5. Lower/negative scores = board looks better for O (the opponent)
- * 
- * EXAMPLE CALCULATION:
- * If board is:  X | O | X
- *               ---------
- *               O | X | 
- *               ---------
- *                 |   | 
- * 
- * score = (+1 × 3.928) + (-1 × 3.603) + (+1 × 4.011) +
- *         (-1 × 3.683) + (+1 × 4.313) + (0 × 3.617) +
- *         (0 × 3.984) + (0 × 3.670) + (0 × 3.985) + (-1.645)
- *       = 3.928 - 3.603 + 4.011 - 3.683 + 4.313 + 0 + 0 + 0 + 0 - 1.645
- *       = 3.321 (positive score = favorable for X)
  * 
  * @param board 3x3 game board with 'X', 'O', or ' ' (empty)
  * @return Score indicating how favorable the position is for X (the AI)
