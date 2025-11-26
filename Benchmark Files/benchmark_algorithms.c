@@ -16,6 +16,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// External declaration for stack tracking (defined in benchmark.c)
+extern void track_stack_usage(void);
+
 // Reuse the same benchmarking globals from minimax.c
 extern int g_max_depth_reached;
 
@@ -23,7 +26,7 @@ extern int g_max_depth_reached;
 // HELPER FUNCTIONS (ARRAY BASED)
 // ============================================================================
 
-static bool checkWin(char board[3][3], char player) {
+static bool checkWin(char (*board)[3], char player) {
   // Rows & Cols
   for (int i = 0; i < 3; i++) {
     if (board[i][0] == player && board[i][1] == player && board[i][2] == player)
@@ -40,7 +43,7 @@ static bool checkWin(char board[3][3], char player) {
   return false;
 }
 
-static bool isBoardFull(char board[3][3]) {
+static bool isBoardFull(char (*board)[3]) {
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 3; j++) {
       if (board[i][j] == ' ')
@@ -66,8 +69,10 @@ static bool isBoardFull(char board[3][3]) {
  * @param beta - Best value minimizer can guarantee (upper bound for min)
  * @return Score for the board position (-10 to +10)
  */
-static int minimax_array(char board[3][3], int depth, bool isMax, int alpha,
-                         int beta, char aiSymbol, char humanSymbol) {
+static int minimax_array(char (*board)[3], int depth, bool isMax, int alpha, int beta, char aiSymbol, char humanSymbol) {
+  // Track stack usage for calibration (zero overhead when disabled)
+  track_stack_usage();
+  
   // Terminal state checks
   if (checkWin(board, aiSymbol))
     return 10 - depth; // AI wins (prefer shorter paths to victory)
@@ -125,7 +130,7 @@ static int minimax_array(char board[3][3], int depth, bool isMax, int alpha,
   }
 }
 
-struct Move findBestMoveMinimax_NoBitboard(char board[3][3], char aiSymbol,
+struct Move findBestMoveMinimax_NoBitboard(char (*board)[3], char aiSymbol,
                                            int errorRate) {
   char humanSymbol = (aiSymbol == 'X') ? 'O' : 'X';
   struct Move bestMove = {-1, -1};
@@ -192,8 +197,10 @@ struct Move findBestMoveMinimax_NoBitboard(char board[3][3], char aiSymbol,
 // ARRAY-BASED MINIMAX (NO OPTIMIZATIONS)
 // ============================================================================
 
-static int minimax_array_no_pruning(char board[3][3], int depth, bool isMax,
-                                    char aiSymbol, char humanSymbol) {
+static int minimax_array_no_pruning(char (*board)[3], int depth, bool isMax, char aiSymbol, char humanSymbol) {
+  // Track stack usage for calibration (zero overhead when disabled)
+  track_stack_usage();
+  
   if (checkWin(board, aiSymbol))
     return 10 - depth;
   if (checkWin(board, humanSymbol))
@@ -234,8 +241,7 @@ static int minimax_array_no_pruning(char board[3][3], int depth, bool isMax,
   }
 }
 
-struct Move findBestMoveMinimax_NoBitboard_NoPruning(char board[3][3],
-                                                     char aiSymbol) {
+struct Move findBestMoveMinimax_NoBitboard_NoPruning(char (*board)[3], char aiSymbol) {
   char humanSymbol = (aiSymbol == 'X') ? 'O' : 'X';
   struct Move bestMove = {-1, -1};
   int bestVal = -1000;
@@ -272,6 +278,9 @@ struct Move findBestMoveMinimax_NoBitboard_NoPruning(char board[3][3],
  */
 static int minimax_masks_no_pruning(int playerMask, int oppMask, int depth,
                                     bool isMax) {
+  // Track stack usage for calibration (zero overhead when disabled)
+  track_stack_usage();
+  
   // Track max depth for benchmarking
   if (depth > g_max_depth_reached) {
     g_max_depth_reached = depth;
@@ -312,7 +321,7 @@ static int minimax_masks_no_pruning(int playerMask, int oppMask, int depth,
   return best;
 }
 
-struct Move findBestMoveMinimax_NoAlphaBeta(char board[3][3], char aiSymbol) {
+struct Move findBestMoveMinimax_NoAlphaBeta(char (*board)[3], char aiSymbol) {
   // 1. SETUP: Convert Board to Bitmasks
   int maskX = 0, maskO = 0;
   boardToMasks(board, &maskX, &maskO);
@@ -334,6 +343,99 @@ struct Move findBestMoveMinimax_NoAlphaBeta(char board[3][3], char aiSymbol) {
 
     // Run minimax WITHOUT pruning
     int moveVal = minimax_masks_no_pruning(aiMask | bit, oppMask, 1, false);
+
+    if (moveVal > bestVal) {
+      bestVal = moveVal;
+      bestMove.row = pos / 3;
+      bestMove.col = pos % 3;
+    }
+  }
+
+  return bestMove;
+}
+
+// ============================================================================
+// BITBOARD-BASED MINIMAX (WITH ALPHA-BETA) - Production Version for Measurement
+// ============================================================================
+
+/**
+ * @brief Production bitboard minimax with alpha-beta pruning
+ * Copy of production Minimax.c function for stack measurement
+ */
+static int minimax_masks_with_alphabeta(int playerMask, int oppMask, int depth,
+                                        int alpha, int beta, bool isMax) {
+  // Track stack usage for calibration (zero overhead when disabled)
+  track_stack_usage();
+  
+  // Track max depth for benchmarking
+  if (depth > g_max_depth_reached) {
+    g_max_depth_reached = depth;
+  }
+
+  // Terminal state checks
+  if (isWinnerMask(playerMask))
+    return 10 - depth;
+  if (isWinnerMask(oppMask))
+    return -10 + depth;
+  if ((playerMask | oppMask) == 0x1FF)
+    return 0; // Draw
+
+  // Recursive search with alpha-beta pruning
+  int best = isMax ? -1000 : 1000;
+
+  for (int mi = 0; mi < 9; ++mi) {
+    int pos = MOVE_ORDER[mi];
+    int bit = (1 << pos);
+
+    if ((playerMask | oppMask) & bit)
+      continue;
+
+    if (isMax) {
+      int val = minimax_masks_with_alphabeta(playerMask | bit, oppMask, depth + 1,
+                                             alpha, beta, false);
+      if (val > best)
+        best = val;
+      if (val > alpha)
+        alpha = val;
+      if (alpha >= beta)
+        break; // Beta cutoff
+    } else {
+      int val = minimax_masks_with_alphabeta(playerMask, oppMask | bit, depth + 1,
+                                             alpha, beta, true);
+      if (val < best)
+        best = val;
+      if (val < beta)
+        beta = val;
+      if (alpha >= beta)
+        break; // Alpha cutoff
+    }
+  }
+  return best;
+}
+
+/**
+ * Wrapper function for bitboard minimax with alpha-beta (for benchmarking)
+ */
+struct Move findBestMoveMinimax_Bitboard(char (*board)[3], char aiSymbol) {
+  int maskX = 0, maskO = 0;
+  boardToMasks(board, &maskX, &maskO);
+
+  int aiMask, oppMask;
+  getPlayerMasks(maskX, maskO, aiSymbol, &aiMask, &oppMask);
+
+  int occupied = aiMask | oppMask;
+  struct Move bestMove = {-1, -1};
+  int bestVal = -1000;
+
+  for (int mi = 0; mi < 9; ++mi) {
+    int pos = MOVE_ORDER[mi];
+    int bit = (1 << pos);
+
+    if (occupied & bit)
+      continue;
+
+    int moveVal = minimax_masks_with_alphabeta(aiMask | bit, oppMask, 1, -1000,
+                                               1000, false);
 
     if (moveVal > bestVal) {
       bestVal = moveVal;

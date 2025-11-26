@@ -57,7 +57,7 @@ const int MOVE_ORDER[9] = { 4, 0, 2, 6, 8, 1, 3, 5, 7 };
  * Each bit of maskX/maskO corresponds to one board cell (0-8). This
  * transformation lets the AIs operate on fast bitwise operations.
  */
-void boardToMasks(const char board[3][3], int *maskX, int *maskO) {
+void boardToMasks(const char (*board)[3], int *maskX, int *maskO) {
     *maskX = 0;
     *maskO = 0;
     for (int r = 0; r < 3; ++r) {

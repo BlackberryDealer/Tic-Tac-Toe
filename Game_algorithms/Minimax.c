@@ -77,7 +77,7 @@ static int minimax_masks(int playerMask, int oppMask, int depth, int alpha,
 // PUBLIC API FUNCTION
 // ============================================================================
 
-struct Move findBestMoveMinimax(char board[3][3], char aiSymbol,
+struct Move findBestMoveMinimax(char (*board)[3], char aiSymbol,
                                 int errorRate) {
   // 1. SETUP: Convert Board to Bitmasks
   int maskX = 0, maskO = 0;

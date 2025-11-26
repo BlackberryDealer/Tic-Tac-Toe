@@ -54,4 +54,16 @@ struct Move findBestMoveMinimax_NoBitboard_NoPruning(char board[3][3],
  */
 struct Move findBestMoveMinimax_NoAlphaBeta(char board[3][3], char aiSymbol);
 
+/**
+ * Bitboard-based Minimax WITH Alpha-Beta Pruning (Production version)
+ *
+ * Copy of production Minimax.c implementation for stack measurement.
+ * Uses efficient bitboard representation with Alpha-Beta pruning.
+ *
+ * @param board     3x3 character array (' ' = empty, 'X' or 'O' = occupied)
+ * @param aiSymbol  The symbol AI is playing as ('X' or 'O')
+ * @return Move structure containing {row, col} of best move
+ */
+struct Move findBestMoveMinimax_Bitboard(char board[3][3], char aiSymbol);
+
 #endif

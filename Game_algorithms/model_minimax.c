@@ -46,7 +46,7 @@ const double LR_BIAS = -1.6450287057758302;
  * @param board 3x3 game board.
  * @return Score (Higher = better for AI/X).
  */
-double evaluateBoardLogistic(const char board[3][3]) {
+double evaluateBoardLogistic(const char (*board)[3]) {
     double val = 0.0;
     int idx = 0;
     
@@ -78,7 +78,7 @@ double evaluateBoardLogistic(const char board[3][3]) {
  * @param board Current 3x3 game board.
  * @return The move that results in the highest evaluation score.
  */
-struct Move findBestMoveModel(char board[3][3]) {
+struct Move findBestMoveModel(char (*board)[3]) {
     struct Move bestMove = {-1, -1};
     double bestVal = -1000.0;
     
