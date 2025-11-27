@@ -26,7 +26,6 @@ PowerShell example:
 - **`Benchmark Files/`:**: Benchmarking code and simulation harnesses.
 - **`bin/`:**: Binary outputs and generated `game_history.txt` (runtime artifacts).
 - **`resources/`:**: Assets used by the game (images, data, etc.).
-- **`deprecated_files/`:**: Old or experimental code kept for reference.
 
 **Benchmarks & Tests**
 - **Benchmarks:**: See `Benchmark Files/` for `benchmark.c`, `benchmark_algorithms.c`, and harnesses.
