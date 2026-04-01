@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
 #include "model_minimax.h"
 #include "minimax.h"
@@ -75,10 +76,11 @@ double evaluateBoardLogistic(const char (*board)[3]) {
 
 /**
  * @brief Finds the best move using greedy search with logistic regression evaluation.
- * @param board Current 3x3 game board.
+ * @param board Current 3x3 game board (not modified).
+ * @param aiSymbol The symbol the AI is playing ('X' or 'O').
  * @return The move that results in the highest evaluation score.
  */
-struct Move findBestMoveModel(char (*board)[3]) {
+struct Move findBestMoveModel(char (*board)[3], char aiSymbol) {
     struct Move bestMove = {-1, -1};
     double bestVal = -1000.0;
     
@@ -87,14 +89,20 @@ struct Move findBestMoveModel(char (*board)[3]) {
         for (int j = 0; j < 3; j++) {
             
             if (board[i][j] == ' ') {
-                // Simulate move
-                board[i][j] = 'X';
+                // Use a local copy to avoid mutating the caller's board
+                char localBoard[3][3];
+                memcpy(localBoard, board, sizeof(localBoard));
+                
+                // Simulate move with AI's actual symbol
+                localBoard[i][j] = aiSymbol;
                 
                 // Evaluate resulting board state
-                double moveVal = evaluateBoardLogistic(board);
+                double moveVal = evaluateBoardLogistic(localBoard);
                 
-                // Undo move
-                board[i][j] = ' ';
+                // For 'O', invert the score since the model is trained for X
+                if (aiSymbol == 'O') {
+                    moveVal = -moveVal;
+                }
                 
                 // Update best move if this score is higher
                 if (moveVal > bestVal) {

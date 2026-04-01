@@ -94,7 +94,7 @@ int main() {
   printf("Testing Easy Mode (Logistic Regression AI Model)...\n");
   start = clock();
   for (int i = 0; i < ai_iterations; i++) {
-    move = findBestMoveModel(board);
+    move = findBestMoveModel(board, 'X');
   }
   end = clock();
   double time_easy = ((double)(end - start)) / CLOCKS_PER_SEC;
@@ -258,8 +258,12 @@ int main() {
   printf("Minimax Array (Alpha-Beta):\n");
   printf("  Avg Time per Move: %.6f s\n\n", avg_time_2_b1);
 
-  printf("SPEEDUP: %.2fx Faster with Alpha-Beta Pruning\n",
-         avg_time_1_b1 / avg_time_2_b1);
+  if (avg_time_2_b1 > 0.0) {
+    printf("SPEEDUP: %.2fx Faster with Alpha-Beta Pruning\n",
+           avg_time_1_b1 / avg_time_2_b1);
+  } else {
+    printf("SPEEDUP: Too fast to measure accurately\n");
+  }
   printf("========================================\n");
 
   // ====================================================================
@@ -346,11 +350,17 @@ int main() {
   printf("  State Memory Size: %zu bytes\n", sizeof(char) * 9);
   printf("  Avg Time per Move: %.6f s\n\n", avg_time_2_b2);
 
-  if (cpu_time_1 < cpu_time_2)
-    printf("SPEEDUP: %.2fx (Bitboard is Faster)\n",
-           avg_time_2_b2 / avg_time_1_b2);
-  else
-    printf("SPEEDUP: %.2fx (Array is Faster)\n", avg_time_1_b2 / avg_time_2_b2);
+  if (cpu_time_1 < cpu_time_2) {
+    if (avg_time_1_b2 > 0.0)
+      printf("SPEEDUP: %.2fx (Bitboard is Faster)\n", avg_time_2_b2 / avg_time_1_b2);
+    else
+      printf("SPEEDUP: Too fast to measure accurately\n");
+  } else {
+    if (avg_time_2_b2 > 0.0)
+      printf("SPEEDUP: %.2fx (Array is Faster)\n", avg_time_1_b2 / avg_time_2_b2);
+    else
+      printf("SPEEDUP: Too fast to measure accurately\n");
+  }
 
   printf("========================================\n");
 
@@ -443,8 +453,12 @@ int main() {
   printf("Minimax Array (No Optimisations):\n");
   printf("  Avg Time per Move: %.6f s\n\n", avg_time_2_b3);
 
-  printf("SPEEDUP: %.2fx (Fastest vs Slowest Implementation)\n",
-         avg_time_2_b3 / avg_time_1_b3);
+  if (avg_time_1_b3 > 0.0) {
+    printf("SPEEDUP: %.2fx (Fastest vs Slowest Implementation)\n",
+           avg_time_2_b3 / avg_time_1_b3);
+  } else {
+    printf("SPEEDUP: Too fast to measure accurately\n");
+  }
   printf("========================================\n");
 
   // Final summary

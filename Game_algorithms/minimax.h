@@ -29,12 +29,14 @@ struct Move {
 
 /**
  * @brief Find the best move using Minimax with Adjustable Difficulty.
- * * This function unifies the Perfect and Imperfect logic.
+ *
+ * This function unifies the Perfect and Imperfect logic.
  * - If errorRate == 0: Plays Perfectly (Unbeatable).
  * - If errorRate > 0:  Has a chance to ignore strategy and play randomly.
- * * @param board 3x3 game board (char array)
+ *
+ * @param board 3x3 game board (char array)
  * @param aiSymbol The symbol the AI is playing ('X' or 'O')
- * @param errorRate Percentage chance (0-100) to make a random random move.
+ * @param errorRate Percentage chance (0-100) to make a random move.
  * @return Move structure with the best move coordinates
  */
 struct Move findBestMoveMinimax(char board[3][3], char aiSymbol, int errorRate);
@@ -47,9 +49,10 @@ struct Move findBestMoveMinimax(char board[3][3], char aiSymbol, int errorRate);
  * Good for easy difficulty.
  *
  * @param board 3x3 game board (char array)
+ * @param aiSymbol The symbol the AI is playing ('X' or 'O')
  * @return Move structure with the best move coordinates
  */
-struct Move findBestMoveModel(char board[3][3]);
+struct Move findBestMoveModel(char board[3][3], char aiSymbol);
 
 // Global for benchmarking
 extern int g_max_depth_reached;

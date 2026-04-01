@@ -111,16 +111,26 @@ void getPlayerMasks(int maskX, int maskO, char aiSymbol, int *aiMask, int *oppMa
             *oppMask = maskX;   // Opponent plays X
         }
     } else {
-        // Board has pieces - determine from counts
+        // Board has pieces - determine from counts AND aiSymbol
         // The player with fewer (or equal) pieces goes next
         if (countX <= countO) {
             // X's turn (X has fewer or equal pieces)
-            *aiMask = maskX;
-            *oppMask = maskO;
+            if (aiSymbol == 'X') {
+                *aiMask = maskX;
+                *oppMask = maskO;
+            } else {
+                *aiMask = maskO;
+                *oppMask = maskX;
+            }
         } else {
             // O's turn (O has fewer pieces)
-            *aiMask = maskO;
-            *oppMask = maskX;
+            if (aiSymbol == 'O') {
+                *aiMask = maskO;
+                *oppMask = maskX;
+            } else {
+                *aiMask = maskX;
+                *oppMask = maskO;
+            }
         }
     }
 }

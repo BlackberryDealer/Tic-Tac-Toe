@@ -13,6 +13,17 @@
 
 #include <stdbool.h>
 
+/**
+ * @brief Scales a size value (width, height, font size) to match window size.
+ * 
+ * Converts a design-time size (based on 1280x720) to the actual
+ * pixel size needed for the current window dimensions.
+ * 
+ * @param designSize Size in design coordinates (1280x720 baseline)
+ * @return Scaled size in actual pixels
+ */
+float ScaleSize(float designSize);
+
 // ============================================================================
 // SCREEN DRAWING FUNCTIONS (The "View")
 // ============================================================================
@@ -52,11 +63,6 @@ void DrawInstructionsScreen(void);
  * @brief Render the main game screen with board and UI
  */
 void DrawGameScreen(void);
-
-/**
- * @brief Render the game over overlay with results
- */
-void DrawGameOverScreen(void);
 
 /**
  * @brief Render the game over overlay with results
@@ -108,11 +114,6 @@ void HandleInstructionsScreen(void);
  * @brief Process input for the game screen (board clicks, AI moves, buttons)
  */
 void HandleGameScreen(void);
-
-/**
- * @brief Process input for the game over screen
- */
-void HandleGameOverScreen(void);
 
 /**
  * @brief Process input for the game over screen

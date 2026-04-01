@@ -7,6 +7,7 @@
 
 #include "ui.h"
 #include "game_state.h" // Needed for colorDark (for button borders)
+#include "screens.h"    // Needed for ScaleSize() (responsive font sizing)
 
 // ============================================================================
 // BUTTON CREATION AND INTERACTION
@@ -57,9 +58,11 @@ void DrawButton(const Rectangle *button, const char* text, Color color)
     DrawRectangleRec(*button, drawColor);
     DrawRectangleLinesEx(*button, 3, colorDark);
     
-    int textWidth = MeasureText(text, 30);
+    // Use responsive font size instead of hardcoded 30
+    int fontSize = (int)ScaleSize(30);
+    int textWidth = MeasureText(text, fontSize);
     DrawText(text, 
              button->x + (button->width - textWidth)/2,
-             button->y + (button->height - 30)/2,
-             30, colorLight);
+             button->y + (button->height - fontSize)/2,
+             fontSize, colorLight);
 }

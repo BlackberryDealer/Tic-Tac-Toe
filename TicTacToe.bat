@@ -1,6 +1,18 @@
 @echo off
 title Tic-Tac-Toe - Build and Run Tool
 
+REM Pre-flight: Check if gcc is available
+where gcc >nul 2>nul
+if %errorlevel% neq 0 (
+    echo ============================================
+    echo   ERROR: GCC not found in PATH!
+    echo   Please install MinGW/MSYS2 and add gcc
+    echo   to your system PATH, then try again.
+    echo ============================================
+    pause
+    exit /b 1
+)
+
 :menu
 cls
 echo ============================================
@@ -74,10 +86,16 @@ pause
 goto menu
 
 :start_game
-REM Run the game from bin directory
-cd bin
+REM Run the game from bin directory with safe directory change
+pushd bin
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to enter bin directory!
+    popd
+    pause
+    goto menu
+)
 TicTacToe.exe
-cd ..
+popd
 
 pause
 goto menu
@@ -131,9 +149,15 @@ echo   Running Tic-Tac-Toe Game
 echo ============================================
 echo.
 
-cd bin
+pushd bin
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to enter bin directory!
+    popd
+    pause
+    goto menu
+)
 TicTacToe.exe
-cd ..
+popd
 
 pause
 goto menu

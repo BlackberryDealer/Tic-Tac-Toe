@@ -21,6 +21,12 @@ int main(void)
     // Initialize window with resizable flag
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Tic-Tac-Toe");
+    
+    // Validate window initialization
+    if (!IsWindowReady()) {
+        return 1;
+    }
+    
     InitAudioDevice();
     SetTargetFPS(60);
     
@@ -30,7 +36,7 @@ int main(void)
     
     // ========================================================================
     // MAIN GAME LOOP
-    // =VERSION 2================================================================
+    // ========================================================================
     /**
      * This is the main game loop. It runs once per frame (target 60 FPS).
      * It follows a clean "Handle Input -> Update -> Draw" pattern.
@@ -82,6 +88,10 @@ int main(void)
             case SCREEN_GAME_OVER:
                 HandleGameOverScreen();
                 break;
+            default:
+                // Invalid screen state - reset to start
+                game.screen = SCREEN_START;
+                break;
         }
         
         // ====================================================================
@@ -132,6 +142,10 @@ int main(void)
                  */
                 DrawGameScreen();
                 DrawGameOverScreen();
+                break;
+            default:
+                // Invalid screen state - reset to start
+                game.screen = SCREEN_START;
                 break;
         }
         

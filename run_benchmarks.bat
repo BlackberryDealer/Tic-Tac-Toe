@@ -1,4 +1,16 @@
 @echo off
+
+REM Pre-flight: Check if gcc is available
+where gcc >nul 2>nul
+if %errorlevel% neq 0 (
+    echo ================================================================
+    echo   ERROR: GCC not found in PATH!
+    echo   Please install MinGW/MSYS2 and add gcc to your system PATH.
+    echo ================================================================
+    pause
+    exit /b 1
+)
+
 echo ================================================================
 echo   TIC-TAC-TOE AI BENCHMARK SUITE
 echo ================================================================
@@ -106,9 +118,20 @@ echo ================================================================
 echo   RUNNING BENCHMARK.EXE
 echo ================================================================
 echo.
-cd bin
+if not exist "bin\benchmark.exe" (
+    echo ERROR: bin\benchmark.exe not found! Please compile first.
+    pause
+    goto menu
+)
+pushd bin
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to enter bin directory!
+    popd
+    pause
+    goto menu
+)
 benchmark.exe
-cd ..
+popd
 echo.
 echo ================================================================
 echo   BENCHMARK COMPLETE
@@ -123,9 +146,20 @@ echo ================================================================
 echo   RUNNING SIMULATION.EXE
 echo ================================================================
 echo.
-cd bin
+if not exist "bin\simulation.exe" (
+    echo ERROR: bin\simulation.exe not found! Please compile first.
+    pause
+    goto menu
+)
+pushd bin
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to enter bin directory!
+    popd
+    pause
+    goto menu
+)
 simulation.exe
-cd ..
+popd
 echo.
 echo ================================================================
 echo   SIMULATION COMPLETE
@@ -140,7 +174,23 @@ echo ================================================================
 echo   RUNNING BENCHMARK.EXE
 echo ================================================================
 echo.
-cd bin
+if not exist "bin\benchmark.exe" (
+    echo ERROR: bin\benchmark.exe not found! Please compile first.
+    pause
+    goto menu
+)
+if not exist "bin\simulation.exe" (
+    echo ERROR: bin\simulation.exe not found! Please compile first.
+    pause
+    goto menu
+)
+pushd bin
+if %errorlevel% neq 0 (
+    echo ERROR: Failed to enter bin directory!
+    popd
+    pause
+    goto menu
+)
 benchmark.exe
 echo.
 echo.
@@ -149,7 +199,7 @@ echo   RUNNING SIMULATION.EXE
 echo ================================================================
 echo.
 simulation.exe
-cd ..
+popd
 echo.
 echo ================================================================
 echo   ALL BENCHMARKS COMPLETE

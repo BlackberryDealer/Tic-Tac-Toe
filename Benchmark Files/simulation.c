@@ -13,6 +13,7 @@
 #include <time.h>
 #include "../GUI_handlers/game_state.h"
 #include "../Game_algorithms/minimax.h"
+#include "../Game_algorithms/model_minimax.h"
 
 // Configuration
 #define NUM_GAMES 10000  // Must be even for equal start distribution
@@ -37,7 +38,8 @@ int play_game(int test_ai_mode, int test_ai_starts) {
         }
     }
     
-    // Reset global game winner for this game context
+    // Save and reset global game winner for this game context
+    char savedWinner = game.winner;
     game.winner = ' ';
     
     // Determine who moves first based on the function argument
@@ -64,8 +66,8 @@ int play_game(int test_ai_mode, int test_ai_starts) {
             } else if (test_ai_mode == 2) {
                 move = findBestMoveMinimax(tempBoard, TEST_AI_SYMBOL, 20);
             } else if (test_ai_mode == 3) {
-                // Model AI is optimized for 'X'
-                move = findBestMoveModel(tempBoard);
+                // Model AI with proper symbol support
+                move = findBestMoveModel(tempBoard, TEST_AI_SYMBOL);
             }
         } else {
             // --- BENCHMARK AI TURN (Playing as O) ---
@@ -95,10 +97,15 @@ int play_game(int test_ai_mode, int test_ai_starts) {
     }
     
     // Determine Result based on game.winner set by CheckWinner/IsBoardFull
-    if (game.winner == TEST_AI_SYMBOL) return 1;
-    if (game.winner == BENCHMARK_AI_SYMBOL) return -1;
+    int result;
+    if (game.winner == TEST_AI_SYMBOL) result = 1;
+    else if (game.winner == BENCHMARK_AI_SYMBOL) result = -1;
+    else result = 0; // Draw
     
-    return 0; // Draw
+    // Restore saved global state
+    game.winner = savedWinner;
+    
+    return result;
 }
 
 int main() {
@@ -109,7 +116,10 @@ int main() {
     
     // Ensure even number of games for equal starts
     int total_games = NUM_GAMES;
-    if (total_games % 2 != 0) total_games++;
+    if (total_games % 2 != 0) {
+        total_games++;
+        printf("Note: Adjusted to %d games (must be even for equal start distribution)\n", total_games);
+    }
 
     printf("================================================================\n");
     printf("AI DIFFICULTY BENCHMARK SIMULATION\n");

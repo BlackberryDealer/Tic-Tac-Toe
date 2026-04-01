@@ -336,7 +336,7 @@ void MakeAIMove(void)
         bestMove = findBestMoveMinimax(game.board, game.aiSymbol, 20);
     } else {  // DIFF_EASY
         // Model-based AI - uses logistic regression evaluation
-        bestMove = findBestMoveModel(game.board);
+        bestMove = findBestMoveModel(game.board, game.aiSymbol);
     }
     
     // Apply AI move to board if valid
@@ -458,7 +458,13 @@ bool LoadGame(void)
     // are not part of the GameState struct and were not loaded.
     ChangeTheme(game.currentTheme);
 
-    // 7. Restore sound effects
+    // 7. Unload old sound effects before loading new ones (prevent memory leak)
+    UnloadSound(game.sfx.click);
+    UnloadSound(game.sfx.win);
+    UnloadSound(game.sfx.lose);
+    UnloadSound(game.sfx.draw);
+
+    // 8. Restore sound effects
     game.sfx.click     = LoadSound("resources/click.ogg");
     game.sfx.win       = LoadSound("resources/win.ogg");
     game.sfx.lose      = LoadSound("resources/lose.ogg");
@@ -533,7 +539,10 @@ void LoadGameHistory(void) {
             int newCapacity = (game.historyCapacity == 0) ? 10 : game.historyCapacity * 2;
             char **newHistory = (char **)realloc(game.gameHistory, newCapacity * sizeof(char *));
             
-            if (newHistory == NULL) break;  // Allocation failed
+            if (newHistory == NULL) {
+                // realloc failed - old pointer is still valid, just stop loading
+                break;
+            }
             
             game.gameHistory = newHistory;
             game.historyCapacity = newCapacity;

@@ -68,7 +68,7 @@ static float ScaleY(float designY)
 /**
  * @brief Scales a size value (width, height, font size, etc.) to match window size.
  */
-static float ScaleSize(float designSize) 
+float ScaleSize(float designSize) 
 {
     return designSize * CalculateScaleFactor();
 }
@@ -847,7 +847,8 @@ void HandleGameScreen(void)
                     
                     if (CheckCollisionPointRec(mousePos, cell) && game.board[i][j] == ' ')
                     {
-                        // Undo Saving
+                        // Undo Saving (skip only if realloc fails)
+                        bool moveSaved = false;
                         if (game.moveCount >= game.moveCapacity) {
                             int newCapacity = (game.moveCapacity == 0) ? 4 : game.moveCapacity * 2;
                             MoveSnapshot *newHistory = (MoveSnapshot *)realloc(
@@ -857,14 +858,16 @@ void HandleGameScreen(void)
                             if (newHistory != NULL) {
                                 game.moveHistory = newHistory;
                                 game.moveCapacity = newCapacity;
-                            } else goto skip_move_save; 
+                            }
                         }
-                        memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
-                        game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
-                        game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
-                        game.moveCount++;
-
-                        skip_move_save:
+                        if (game.moveCount < game.moveCapacity) {
+                            memcpy(game.moveHistory[game.moveCount].board, game.board, sizeof(game.board));
+                            game.moveHistory[game.moveCount].currentPlayer = game.currentPlayer;
+                            game.moveHistory[game.moveCount].aiTurn = game.aiTurn;
+                            game.moveCount++;
+                            moveSaved = true;
+                        }
+                        (void)moveSaved; // Move proceeds even if undo state wasn't saved
                         
                         // Place Symbol & Sound
                         game.board[i][j] = game.currentPlayer;
