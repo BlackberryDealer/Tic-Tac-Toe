@@ -1,10 +1,4 @@
 ================================================================================
-  _____ _   ___    __      ___________  _____  _    ___  ___  ___ _____ 
- |_   _| | | \ \  / /     / / ___| ___ \|  ___|/ \  |_ _|/ _ \/ _ \_   _|
-   | | | |_| |\ \/ / / / / / |  _| |_/ /| |_ / _ \  | || | | | | || |  
-   | | |  _  |/ /\ \/ / / / /| |_| |  / |  _/ ___ \ | || |_| | |_| || |  
-   |_| |_| |_/_/  \__/ /_/ /  \____|_|\_\|_|/_/   \_\___\___/ \___/ |_|
-   
    A Tic-Tac-Toe game with AI opponents, themes, and benchmarks
    Built with C and Raylib
 ================================================================================
@@ -20,13 +14,14 @@ Table of Contents
   7.  Architecture & Design
   8.  AI Algorithms
   9.  Benchmark Suite
-  10. Theme System
-  11. Game History & Logging
-  12. Requirements
-  13. Contributing Guide
-  14. Troubleshooting
-  15. FAQ
-  16. License
+  10. Test Suite
+  11. Theme System
+  12. Game History & Logging
+  13. Requirements
+  14. Contributing Guide
+  15. Troubleshooting
+  16. FAQ
+  17. License
 
 ================================================================================
 1. PROJECT OVERVIEW
@@ -75,6 +70,12 @@ with a polished, resizable GUI.
     - Compare performance of all AI algorithms
     - Measures execution time, stack usage, and game outcomes
     - Includes simulation harness for AI vs AI matchups
+
+  * Automated Test Suite
+    - 69 tests covering all core game logic
+    - Tests AI correctness, board management, win detection, themes
+    - Runs headlessly (no graphics window required)
+    - One-click run script: run_tests.bat
 
 ================================================================================
 3. SCREENSHOTS & GAME FLOW
@@ -186,6 +187,7 @@ The game follows a multi-screen state machine:
   |-- README.txt                      # This file
   |-- TicTacToe.bat                   # Build & run script (interactive menu)
   |-- run_benchmarks.bat              # Compile & run the benchmark suite
+  |-- run_tests.bat                   # Compile & run the test suite
   |
   |-- Game_algorithms/                # AI and game logic
   |   |-- Minimax.c                   # Core minimax (perfect & imperfect play)
@@ -211,6 +213,10 @@ The game follows a multi-screen state machine:
   |   |-- benchmark_algorithms.h      # Benchmark algorithm declarations
   |   +-- simulation.c                # AI vs AI simulation harness
   |
+  |-- Tests/                          # Automated test suite
+  |   |-- test_suite.c                # 69 tests across 9 test groups
+  |   +-- raylib_stub.c               # Minimal raylib stubs for headless testing
+  |
   |-- lib/
   |   +-- raylib/
   |       +-- raylib.h                # Raylib header (for compilation)
@@ -219,6 +225,7 @@ The game follows a multi-screen state machine:
       |-- TicTacToe.exe               # Compiled game executable
       |-- benchmark.exe               # Compiled benchmark executable
       |-- simulation.exe              # Compiled simulation executable
+      |-- test_suite.exe              # Compiled test suite executable
       |-- game_history.txt            # Game results log (generated at runtime)
       |-- logistic_regression_params.json  # Copy of model params
       +-- resources/                  # Runtime assets
@@ -265,6 +272,8 @@ The game follows a multi-screen state machine:
     - Minimax.c/h        -> Minimax AI with adjustable difficulty
     - model_minimax.c/h  -> Logistic regression AI
     - minimax_utils.c/h  -> Bitboard helpers shared by AI modules
+    - test_suite.c       -> Automated tests for all core logic
+    - raylib_stub.c      -> Raylib stubs for headless test execution
 
 ================================================================================
 8. AI ALGORITHMS
@@ -335,7 +344,89 @@ The game follows a multi-screen state machine:
     - simulation.c             -- AI vs AI simulation (playouts)
 
 ================================================================================
-10. THEME SYSTEM
+10. TEST SUITE
+================================================================================
+
+  The automated test suite verifies that all core game logic works correctly.
+  It runs entirely in the console (no graphics window or Raylib library needed
+  at runtime) by using minimal stubs for Raylib audio functions.
+
+  Running the Tests:
+    > .\run_tests.bat
+
+  This compiles and runs the test suite. All 69 tests should pass.
+
+  Manual Compilation:
+    > gcc -o Tests\test_suite.exe ^
+        Tests\test_suite.c ^
+        Tests\raylib_stub.c ^
+        GUI_handlers\game_state.c ^
+        Game_algorithms\Minimax.c ^
+        Game_algorithms\minimax_utils.c ^
+        Game_algorithms\model_minimax.c ^
+        -Ilib\raylib -I. -lm
+
+  Test Groups (69 tests total):
+
+    1. Bitboard Utilities (13 tests)
+       - countBits: empty, single-bit, multi-bit masks
+       - isWinnerMask: all 8 win lines, no-winner cases
+       - boardToMasks: empty, full, winning boards
+       - getPlayerMasks: AI as X, AI as O, mid-game detection
+
+    2. CheckWinner (12 tests)
+       - All 8 winning lines (rows, columns, diagonals)
+       - No-win partial boards
+       - Win statistics updates for 1-player and 2-player modes
+
+    3. IsBoardFull (4 tests)
+       - Empty boards, partial boards, full boards
+       - Draw counter incrementing
+
+    4. ResetBoard (6 tests)
+       - Board clearing, player turn order
+       - AI goes first when human chooses O
+       - Statistics preservation across resets
+
+    5. Minimax AI - Perfect Play (12 tests)
+       - Finding winning moves (rows, columns, diagonals)
+       - Blocking opponent threats
+       - Valid move generation, full-board edge case
+       - 100-game perfect-vs-perfect validation (all draws)
+       - Fork (double-threat) creation
+
+    6. Model AI (6 tests)
+       - Valid move generation for X and O
+       - Logistic regression evaluation scores
+       - Full-board edge case (no crash)
+
+    7. Theme Management (5 tests)
+       - All 5 themes, invalid theme fallback
+       - Color variable updates on theme change
+
+    8. MakeAIMove (4 tests)
+       - All three difficulty levels (Hard, Medium, Easy)
+       - Winning move execution
+
+    9. Edge Cases & Integration (7 tests)
+       - Win detection consistency (bitboard vs array)
+       - Full game simulation (perfect play -> draw)
+       - Board-to-mask round-trip verification
+       - Move ordering and bit count consistency
+
+  Test Design:
+    The test suite uses a lightweight custom framework (no external dependencies)
+    with ASSERT_TRUE, ASSERT_FALSE, ASSERT_EQ_INT, and ASSERT_EQ_CHAR macros.
+    Each test function is self-contained and resets the global game state before
+    running to prevent state leakage between tests.
+
+  Key Verification:
+    The test_minimax_never_loses_from_empty test plays 100 complete games
+    with perfect minimax on both sides. All 100 games result in draws,
+    confirming that the AI is mathematically unbeatable.
+
+================================================================================
+11. THEME SYSTEM
 ================================================================================
 
   Five built-in color themes are available via the Theme Select screen.
@@ -362,7 +453,7 @@ The game follows a multi-screen state machine:
     3. The theme will automatically appear in the Theme Select screen
 
 ================================================================================
-11. GAME HISTORY & LOGGING
+12. GAME HISTORY & LOGGING
 ================================================================================
 
   After each completed game, the result is appended to:
@@ -373,7 +464,7 @@ The game follows a multi-screen state machine:
   History screen, or open the file directly in any text editor.
 
 ================================================================================
-12. REQUIREMENTS
+13. REQUIREMENTS
 ================================================================================
 
   Runtime (to play the game):
@@ -388,14 +479,19 @@ The game follows a multi-screen state machine:
     * (Optional) Python 3 + Jupyter -- for retraining the ML model
       (see Game_algorithms/AI_development.ipynb)
 
+  Testing (to run the test suite):
+    * MinGW-GCC (C99+) -- same as development
+    * No Raylib DLL or window required (uses stub functions)
+
 ================================================================================
-13. CONTRIBUTING GUIDE
+14. CONTRIBUTING GUIDE
 ================================================================================
 
   Code Organization Conventions:
     * AI & game logic   -> Game_algorithms/
     * UI & screens      -> GUI_handlers/
     * Benchmarks        -> Benchmark Files/
+    * Tests             -> Tests/
     * Runtime assets    -> bin/resources/
 
   Coding Style:
@@ -407,17 +503,25 @@ The game follows a multi-screen state machine:
   Making Changes:
     * AI changes:  Edit files in Game_algorithms/, then rebuild
     * UI changes:  Edit files in GUI_handlers/, then rebuild
-    * New themes:  See "Adding a New Theme" in Section 10
+    * New themes:  See "Adding a New Theme" in Section 11
     * Benchmarks:  Add new tests in Benchmark Files/, update run_benchmarks.bat
+    * Tests:       Add new tests in Tests/test_suite.c, update run_tests.bat
 
   Build & Test Workflow:
     1. Make your changes
     2. Build with TicTacToe.bat (option 1 or 3)
-    3. Test the game manually
-    4. Run benchmarks with run_benchmarks.bat to check for regressions
+    3. Run the automated test suite: run_tests.bat
+    4. Test the game manually
+    5. Run benchmarks with run_benchmarks.bat to check for regressions
+
+  Adding New Tests:
+    1. Open Tests/test_suite.c
+    2. Add a new TEST() function following the existing pattern
+    3. Register it in main() using RUN_TEST()
+    4. Run run_tests.bat to verify your test passes
 
 ================================================================================
-14. TROUBLESHOOTING
+15. TROUBLESHOOTING
 ================================================================================
 
   Problem: "GCC not found in PATH!"
@@ -454,8 +558,14 @@ The game follows a multi-screen state machine:
     Make sure all Game_algorithms/ source files are present and that gcc
     can find them via the -I include paths.
 
+  Problem: Test suite fails to compile
+    Solution: The test suite uses stubs for Raylib functions. Ensure:
+      - Tests/raylib_stub.c is present
+      - The -Ilib\raylib flag is included (for the raylib.h header)
+      - All Game_algorithms/ and GUI_handlers/ source files are present
+
 ================================================================================
-15. FAQ (FREQUENTLY ASKED QUESTIONS)
+16. FAQ (FREQUENTLY ASKED QUESTIONS)
 ================================================================================
 
   Q: Can I play this on macOS or Linux?
@@ -481,7 +591,8 @@ The game follows a multi-screen state machine:
   depth search and alpha-beta pruning. Since Tic-Tac-Toe is a solved game,
   the AI will never lose. The best possible outcome against it is a draw.
   You can verify this by running AI vs AI simulations in the benchmark
-  suite.
+  suite, or by running the test suite (test_minimax_never_loses_from_empty
+  plays 100 perfect-vs-perfect games and verifies all end in draws).
 
   -------------------------------------------------------------------------
 
@@ -596,6 +707,25 @@ The game follows a multi-screen state machine:
 
   -------------------------------------------------------------------------
 
+  Q: How do I run the automated tests?
+  -------------------------------------
+  A: The test suite is in Tests/test_suite.c. To run it:
+
+    1. Quick method: Double-click run_tests.bat or run it from a terminal:
+       > .\run_tests.bat
+
+    2. Manual method:
+       > gcc -o Tests\test_suite.exe Tests\test_suite.c Tests\raylib_stub.c ^
+           GUI_handlers\game_state.c Game_algorithms\Minimax.c ^
+           Game_algorithms\minimax_utils.c Game_algorithms\model_minimax.c ^
+           -Ilib\raylib -I. -lm
+       > .\Tests\test_suite.exe
+
+  The test suite requires NO graphical window or Raylib DLL -- it runs
+  entirely in the console using stub functions for Raylib audio calls.
+
+  -------------------------------------------------------------------------
+
   Q: Can I use this code in my own project?
   ------------------------------------------
   A: This project was created for educational purposes. The AI algorithms
@@ -617,12 +747,12 @@ The game follows a multi-screen state machine:
   If the repository is not publicly hosted, contact the maintainer directly.
 
 ================================================================================
-16. LICENSE
+17. LICENSE
 ================================================================================
 
   Educational / project use. Check course or instructor policies before
   external distribution. See repository owner for licensing details.
 
 ================================================================================
-Last Updated: March 2026
+Last Updated: April 2026
 ================================================================================
